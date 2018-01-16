@@ -44,6 +44,7 @@ arg_parser = argparse.ArgumentParser(description='download and optimize m3u/epg 
 arg_parser.add_argument('--m3uurl', '-m', nargs='?', help='The url to pull the m3u file from')
 arg_parser.add_argument('--epgurl', '-e', nargs='?', help='The url to pull the epg file from')
 arg_parser.add_argument('--groups', '-g', nargs='?', help='Channel groups in the m3u to keep')
+arg_parser.add_argument('--channels', '-c', nargs='?', help='Individual channels in the m3u to discard')
 arg_parser.add_argument('--sortchannels', '-s', action='store_true', help='Sort channels alphabetically')
 arg_parser.add_argument('--outdirectory', '-d', nargs='?', help='The output folder where retrieved and generated file are to be stored')
 arg_parser.add_argument('--outfilename', '-f', nargs='?', help='The output filename for the generated files')
@@ -80,6 +81,12 @@ def validate_args():
 
     set_str = '([' + args.groups + '])'
     args.groups = set(ast.literal_eval(set_str))
+
+    if args.channels:
+        set_str = '([' + args.channels + '])'
+        args.channels = set(ast.literal_eval(set_str))
+    else:
+        args.channels = set()
 
     if not args.outdirectory:
         abort_process('--outdirectory is mandatory', 1)
@@ -166,10 +173,13 @@ def parse_m3u(m3u_filename):
 
 # filters the given m3u_entries using the supplied groups and optionally sorts them by channel name alphabetically
 def prune_m3u_entries(args, m3u_entries):
-    output_str("filtering m3u using this: {}".format(str(args.groups)))
+    output_str("keeping channel groups in this {}".format(str(args.groups)))
+    if len(args.channels) > 0:
+        output_str("ignoring channels in this {}".format(str(args.channels)))
+
     pruned_m3u_entries = []
     for stream in m3u_entries:
-        if stream.group_title.lower() in args.groups:
+        if stream.group_title.lower() in args.groups and not stream.tvg_name.lower() in args.channels:
             pruned_m3u_entries.append(stream)
 
     if args.sortchannels:
