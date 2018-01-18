@@ -62,7 +62,7 @@ def main():
 
         epg_filename = load_epg(args)
         if epg_filename is not None:
-            xml_tree = create_new_epg(epg_filename, m3u_entries)
+            xml_tree = create_new_epg(args, epg_filename, m3u_entries)
             save_new_epg(args, xml_tree)
 
 
@@ -260,7 +260,7 @@ def indent(root_elem, level=0):
 
 
 # creates a new epg from the epg represented by original_epg_filename using the given m3u_entries as a template
-def create_new_epg(original_epg_filename, m3u_entries):
+def create_new_epg(args, original_epg_filename, m3u_entries):
     output_str("creating new xml epg for {} m3u items".format(len(m3u_entries)))
     original_tree = parse(original_epg_filename)
     original_root = original_tree.getroot()
@@ -285,6 +285,7 @@ def create_new_epg(original_epg_filename, m3u_entries):
                     new_elem.set(attr_key, attr_val)
 
     # now copy all programme elements from the original epg for every channel present in the m3u
+    no_epg_channels = []
     for entry in m3u_entries:
         if entry.tvg_id is not None and entry.tvg_id != "" and entry.tvg_id != "None":
             output_str("creating programme elements for {}".format(entry.tvg_name))
@@ -300,10 +301,25 @@ def create_new_epg(original_epg_filename, m3u_entries):
                     for attr_key in sub_elem.keys():
                         attr_val = sub_elem.get(attr_key)
                         new_elem.set(attr_key, attr_val)
+        else:
+            no_epg_channels.append("'{}'".format(entry.tvg_name.lower()))
 
     indent(new_root)
     tree = ElementTree(new_root)
+
+    save_no_epg_channels(args, no_epg_channels)
+
     return tree
+
+
+# saves the no_epg_channels list into the file system
+def save_no_epg_channels(args, no_epg_channels):
+    csv = ''
+    no_epg_channels_file = os.path.join(args.outdirectory, "no_epg_channels.txt")
+    if len(no_epg_channels) > 0:
+        csv = ",".join(no_epg_channels)
+    with open(no_epg_channels_file, "w") as text_file:
+        text_file.write(csv)
 
 
 # saves the epg xml document represented by xml_tree into the file system
