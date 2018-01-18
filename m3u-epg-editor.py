@@ -21,6 +21,7 @@ import shutil
 import gzip
 from xml.etree.cElementTree import Element, SubElement, parse, ElementTree
 import datetime
+import dateutil.parser
 
 
 class M3uItem:
@@ -45,7 +46,8 @@ arg_parser.add_argument('--m3uurl', '-m', nargs='?', help='The url to pull the m
 arg_parser.add_argument('--epgurl', '-e', nargs='?', help='The url to pull the epg file from')
 arg_parser.add_argument('--groups', '-g', nargs='?', help='Channel groups in the m3u to keep')
 arg_parser.add_argument('--channels', '-c', nargs='?', help='Individual channels in the m3u to discard')
-arg_parser.add_argument('--sortchannels', '-s', action='store_true', help='Sort channels alphabetically')
+arg_parser.add_argument('--range', '-r', nargs='?', help='An optional range window to consider when adding programmes to the epg')
+arg_parser.add_argument('--sortchannels', '-s', action='store_true', help='Optionally sort channels alphabetically')
 arg_parser.add_argument('--outdirectory', '-d', nargs='?', help='The output folder where retrieved and generated file are to be stored')
 arg_parser.add_argument('--outfilename', '-f', nargs='?', help='The output filename for the generated files')
 
@@ -87,6 +89,11 @@ def validate_args():
         args.channels = set(ast.literal_eval(set_str))
     else:
         args.channels = set()
+
+    if args.range:
+        args.range = int(args.range)
+    else:
+        args.range = 168
 
     if not args.outdirectory:
         abort_process('--outdirectory is mandatory', 1)
@@ -259,6 +266,15 @@ def indent(root_elem, level=0):
             root_elem.tail = i
 
 
+# returns an indicator whether the given programme in within the configured range window
+def is_in_range(args, programme):
+    programme_start = dateutil.parser.parse(programme.get("start"))
+    now = datetime.datetime.now(programme_start.tzinfo)
+    range_start = now - datetime.timedelta(hours=args.range)
+    range_end = now + datetime.timedelta(hours=args.range)
+    return range_start <= programme_start <= range_end
+
+
 # creates a new epg from the epg represented by original_epg_filename using the given m3u_entries as a template
 def create_new_epg(args, original_epg_filename, m3u_entries):
     output_str("creating new xml epg for {} m3u items".format(len(m3u_entries)))
@@ -291,16 +307,17 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
             output_str("creating programme elements for {}".format(entry.tvg_name))
             channel_xpath = 'programme[@channel="' + entry.tvg_id + '"]'
             for elem in original_tree.iterfind(channel_xpath):
-                programme = SubElement(new_root, elem.tag)
-                for attr_key in elem.keys():
-                    attr_val = elem.get(attr_key)
-                    programme.set(attr_key, attr_val)
-                for sub_elem in elem:
-                    new_elem = SubElement(programme, sub_elem.tag)
-                    new_elem.text = sub_elem.text
-                    for attr_key in sub_elem.keys():
-                        attr_val = sub_elem.get(attr_key)
-                        new_elem.set(attr_key, attr_val)
+                if is_in_range(args, elem):
+                    programme = SubElement(new_root, elem.tag)
+                    for attr_key in elem.keys():
+                        attr_val = elem.get(attr_key)
+                        programme.set(attr_key, attr_val)
+                    for sub_elem in elem:
+                        new_elem = SubElement(programme, sub_elem.tag)
+                        new_elem.text = sub_elem.text
+                        for attr_key in sub_elem.keys():
+                            attr_val = sub_elem.get(attr_key)
+                            new_elem.set(attr_key, attr_val)
         else:
             no_epg_channels.append("'{}'".format(entry.tvg_name.lower()))
 

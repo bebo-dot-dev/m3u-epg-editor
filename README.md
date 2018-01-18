@@ -27,6 +27,7 @@ import shutil
 import gzip
 from xml.etree.cElementTree import Element, SubElement, parse, ElementTree
 import datetime
+import dateutil.parser
 ```
 
 #### command line options:
@@ -34,7 +35,8 @@ import datetime
 $ python ./m3u-epg-editor.py --help
 usage: m3u-epg-editor.py [-h] [--m3uurl [M3UURL]] [--epgurl [EPGURL]]
                          [--groups [GROUPS]] [--channels [CHANNELS]]
-                         [--sortchannels] [--outdirectory [OUTDIRECTORY]]
+                         [--range [RANGE]] [--sortchannels]
+                         [--outdirectory [OUTDIRECTORY]]
                          [--outfilename [OUTFILENAME]]
 
 download and optimize m3u/epg files retrieved from a remote web server
@@ -49,7 +51,10 @@ optional arguments:
                         Channel groups in the m3u to keep
   --channels [CHANNELS], -c [CHANNELS]
                         Individual channels in the m3u to discard
-  --sortchannels, -s    Sort channels alphabetically
+  --range [RANGE], -r [RANGE]
+                        An optional range window to consider when adding
+                        programmes to the epg
+  --sortchannels, -s    Optionally sort channels alphabetically
   --outdirectory [OUTDIRECTORY], -d [OUTDIRECTORY]
                         The output folder where retrieved and generated file
                         are to be stored
@@ -59,5 +64,5 @@ optional arguments:
 
 #### sample usage call:
 ```
-$ python ./m3u-epg-editor.py -m="http://api.vaders.tv/vget?username=<USERNAME>&password=<PASSWORD>&format=ts" -e="http://vaders.tv/p2.xml.gz" -g="'sports','premium movies'" -c="'willow hd','bein sports espanol hd'" -d="/home/target_directory" -f="output_file"
+$ python ./m3u-epg-editor.py -m="http://api.vaders.tv/vget?username=<USERNAME>&password=<PASSWORD>&format=ts" -e="http://vaders.tv/p2.xml.gz" -g="'sports','premium movies'" -c="'willow hd','bein sports espanol hd'" -r=12 -d="/home/target_directory" -f="output_file"
 ```
