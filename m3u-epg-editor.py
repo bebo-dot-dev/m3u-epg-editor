@@ -32,6 +32,7 @@ class M3uItem:
         self.group_title = None
         self.name = None
         self.url = None
+        self.sort_order = 0
 
         if m3u_fields is not None:
             self.tvg_name = re.search('tvg-name="(.*?)"', m3u_fields).group(1)
@@ -41,13 +42,13 @@ class M3uItem:
             self.name = m3u_fields.split(",")[1]
 
 
-arg_parser = argparse.ArgumentParser(description='download and optimize m3u/epg files retrieved from a remote web server')
+arg_parser = argparse.ArgumentParser(description='download and optimize m3u/epg files retrieved from a remote web server', formatter_class=argparse.RawTextHelpFormatter)
 arg_parser.add_argument('--m3uurl', '-m', nargs='?', help='The url to pull the m3u file from')
 arg_parser.add_argument('--epgurl', '-e', nargs='?', help='The url to pull the epg file from')
 arg_parser.add_argument('--groups', '-g', nargs='?', help='Channel groups in the m3u to keep')
 arg_parser.add_argument('--channels', '-c', nargs='?', help='Individual channels in the m3u to discard')
 arg_parser.add_argument('--range', '-r', nargs='?', help='An optional range window to consider when adding programmes to the epg')
-arg_parser.add_argument('--sortchannels', '-s', action='store_true', help='Optionally sort channels alphabetically')
+arg_parser.add_argument('--sortchannels', '-s', nargs='?', help='The optional desired sort order for channels in the generated m3u')
 arg_parser.add_argument('--outdirectory', '-d', nargs='?', help='The output folder where retrieved and generated file are to be stored')
 arg_parser.add_argument('--outfilename', '-f', nargs='?', help='The output filename for the generated files')
 
@@ -57,9 +58,12 @@ def main():
     args = validate_args()
 
     m3u_entries = load_m3u(args)
-    m3u_entries = prune_m3u_entries(args, m3u_entries)
+    m3u_entries = filter_m3u_entries(args, m3u_entries)
 
     if m3u_entries is not None:
+        if len(args.sortchannels) > 0:
+            m3u_entries = sort_m3u_entries(args, m3u_entries)
+
         save_new_m3u(args, m3u_entries)
 
         epg_filename = load_epg(args)
@@ -94,6 +98,12 @@ def validate_args():
         args.range = int(args.range)
     else:
         args.range = 168
+
+    if args.sortchannels:
+        list_str = '([' + args.sortchannels + '])'
+        args.sortchannels = list(ast.literal_eval(list_str))
+    else:
+        args.sortchannels = []
 
     if not args.outdirectory:
         abort_process('--outdirectory is mandatory', 1)
@@ -178,22 +188,38 @@ def parse_m3u(m3u_filename):
     return m3u_entries
 
 
-# filters the given m3u_entries using the supplied groups and optionally sorts them by channel name alphabetically
-def prune_m3u_entries(args, m3u_entries):
+# filters the given m3u_entries using the supplied groups
+def filter_m3u_entries(args, m3u_entries):
     output_str("keeping channel groups in this {}".format(str(args.groups)))
     if len(args.channels) > 0:
         output_str("ignoring channels in this {}".format(str(args.channels)))
 
-    pruned_m3u_entries = []
-    for stream in m3u_entries:
-        if stream.group_title.lower() in args.groups and not stream.tvg_name.lower() in args.channels:
-            pruned_m3u_entries.append(stream)
+    # sort the channels by category by default
+    m3u_entries = sorted(m3u_entries, key=lambda entry: entry.group_title)
 
-    if args.sortchannels:
-        pruned_m3u_entries = sorted(pruned_m3u_entries, key=lambda entry: entry.tvg_name)
+    filtered_m3u_entries = []
+    channel_name_target = os.path.join(args.outdirectory, args.outfilename + ".channels.txt")
+    with open(channel_name_target, "w") as channels_file:
+        for m3u_entry in m3u_entries:
+            if m3u_entry.group_title.lower() in args.groups and not m3u_entry.tvg_name.lower() in args.channels:
+                filtered_m3u_entries.append(m3u_entry)
+                channels_file.write("'%s'\n" % m3u_entry.tvg_name.lower())
 
-    output_str("filtered m3u contains {} items".format(len(pruned_m3u_entries)))
-    return pruned_m3u_entries
+    output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
+    return filtered_m3u_entries
+
+
+# sorts the given m3u_entries using the supplied args.sortchannels
+def sort_m3u_entries(args, m3u_entries):
+    output_str("desired channel sort order: list{}".format(str(args.sortchannels)))
+    idx = 0
+    for sort_channel in args.sortchannels:
+        m3u_item = next((x for x in m3u_entries if x.tvg_name.lower() == sort_channel), None)
+        if m3u_item is not None:
+            m3u_item.sort_order = idx
+        idx += 1
+    m3u_entries = sorted(m3u_entries, key=lambda entry: entry.sort_order)
+    return m3u_entries
 
 
 # saves the given m3u_entries into the file system

@@ -35,7 +35,7 @@ import dateutil.parser
 $ python ./m3u-epg-editor.py --help
 usage: m3u-epg-editor.py [-h] [--m3uurl [M3UURL]] [--epgurl [EPGURL]]
                          [--groups [GROUPS]] [--channels [CHANNELS]]
-                         [--range [RANGE]] [--sortchannels]
+                         [--range [RANGE]] [--sortchannels [SORTCHANNELS]]
                          [--outdirectory [OUTDIRECTORY]]
                          [--outfilename [OUTFILENAME]]
 
@@ -52,12 +52,11 @@ optional arguments:
   --channels [CHANNELS], -c [CHANNELS]
                         Individual channels in the m3u to discard
   --range [RANGE], -r [RANGE]
-                        An optional range window to consider when adding
-                        programmes to the epg
-  --sortchannels, -s    Optionally sort channels alphabetically
+                        An optional range window to consider when adding programmes to the epg
+  --sortchannels [SORTCHANNELS], -s [SORTCHANNELS]
+                        The optional desired sort order for channels in the generated m3u
   --outdirectory [OUTDIRECTORY], -d [OUTDIRECTORY]
-                        The output folder where retrieved and generated file
-                        are to be stored
+                        The output folder where retrieved and generated file are to be stored
   --outfilename [OUTFILENAME], -f [OUTFILENAME]
                         The output filename for the generated files
 ```
