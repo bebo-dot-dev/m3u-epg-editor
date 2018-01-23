@@ -194,16 +194,19 @@ def filter_m3u_entries(args, m3u_entries):
     if len(args.channels) > 0:
         output_str("ignoring channels in this {}".format(str(args.channels)))
 
-    # sort the channels by category by default
-    m3u_entries = sorted(m3u_entries, key=lambda entry: entry.group_title)
+    # sort the channels by name by default
+    m3u_entries = sorted(m3u_entries, key=lambda entry: entry.tvg_name)
 
     filtered_m3u_entries = []
-    channel_name_target = os.path.join(args.outdirectory, args.outfilename + ".channels.txt")
-    with open(channel_name_target, "w") as channels_file:
-        for m3u_entry in m3u_entries:
-            if m3u_entry.group_title.lower() in args.groups and not m3u_entry.tvg_name.lower() in args.channels:
-                filtered_m3u_entries.append(m3u_entry)
-                channels_file.write("'%s'\n" % m3u_entry.tvg_name.lower())
+    all_channels_name_target = os.path.join(args.outdirectory, "original.channels.txt")
+    filtered_channels_name_target = os.path.join(args.outdirectory, args.outfilename + ".channels.txt")
+    with open(all_channels_name_target, "w") as all_channels_file:
+        with open(filtered_channels_name_target, "w") as filtered_channels_file:
+            for m3u_entry in m3u_entries:
+                if m3u_entry.group_title.lower() in args.groups and not m3u_entry.tvg_name.lower() in args.channels:
+                    filtered_m3u_entries.append(m3u_entry)
+                    filtered_channels_file.write("'%s'\n" % m3u_entry.tvg_name.lower())
+                all_channels_file.write("'%s'\n" % m3u_entry.tvg_name.lower())
 
     output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
     return filtered_m3u_entries

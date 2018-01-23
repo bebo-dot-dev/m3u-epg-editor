@@ -87,13 +87,17 @@ $ python ./m3u-epg-editor.py -m="http://api.vaders.tv/vget?username=<USERNAME>&p
 
 #### files created by this script:
 
-![files](https://github.com/jjssoftware/m3u-epg-editor/blob/master/screenshots/files-screenshot-2018-01-20-10.03.28.png)
+![files](https://github.com/jjssoftware/m3u-epg-editor/blob/master/screenshots/files-screenshot-2018-01-23-21.57.28.png)
 
 Each time this script is run, the following files will be created / overwritten in the specified `--outdirectory / -d` path:
 
 * **original.m3u**
 
    This is the original unmodified m3u file downloaded from the specified `--m3uurl / -m` remote server
+   
+* **original.channels.txt**
+
+   This is a raw text file log that contains an unfiltered list of all channel names from the original m3u
    
 * **original.gz**
 
