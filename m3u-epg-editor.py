@@ -206,7 +206,7 @@ def filter_m3u_entries(args, m3u_entries):
             for m3u_entry in m3u_entries:
                 if m3u_entry.group_title.lower() in args.groups and not m3u_entry.tvg_name.lower() in args.channels:
                     filtered_m3u_entries.append(m3u_entry)
-                    filtered_channels_file.write("'%s'\n" % m3u_entry.tvg_name.lower())
+                    filtered_channels_file.write("'%s','%s'\n" % (m3u_entry.tvg_name.lower(), m3u_entry.group_title.lower()))
                 all_channels_file.write("'%s','%s'\n" % (m3u_entry.tvg_name.lower(), m3u_entry.group_title.lower()))
 
     output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
