@@ -85,7 +85,7 @@ $ python ./m3u-epg-editor.py -m="http://xxx.xxx.xxx/vget?username=<USERNAME>&pas
 ```
 **FabIPTV:**
 ```
-python ./m3u-epg-editor.py -m="http://xxx.xxx:8080/get.php?username=<USERNAME>&password=<PASSWORD>&type=m3u_plus&output=ts" -e="http://xxx.xxx:8080/xmltv.php?username=<USERNAME>&password=<PASSWORD>" -g="'uk + 1 channels','uk bt sport','uk documentaries','uk entertainment','uk movies','uk other sports','uk sky sports'" -c="'dave hd'" -r=12 -d="/home/target_directory" -f="output_file"
+$ python ./m3u-epg-editor.py -m="http://xxx.xxx:8080/get.php?username=<USERNAME>&password=<PASSWORD>&type=m3u_plus&output=ts" -e="http://xxx.xxx:8080/xmltv.php?username=<USERNAME>&password=<PASSWORD>" -g="'uk + 1 channels','uk bt sport','uk documentaries','uk entertainment','uk movies','uk other sports','uk sky sports'" -c="'dave hd'" -r=12 -d="/home/target_directory" -f="output_file"
 ```
 ***
 
