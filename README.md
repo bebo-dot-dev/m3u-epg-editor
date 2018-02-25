@@ -1,29 +1,29 @@
 # m3u-epg-editor
 An m3u / epg file optimizer script written in python
 
-m3u-epg-editor enables download of m3u / epg files from a remote web server and introduces features to trim / optimize
-these files to a set of wanted channel groups along with the ability to sort / reorder channels
+m3u-epg-editor enables download of m3u / epg files from a remote web server and introduces features to trim / optimize these files to a set of wanted channel groups along with the ability to sort / reorder channels
 
-These features might be useful on underpowered devices where SPMC/KODI/some other app running on that device might struggle
-to download and process a large m3u / epg file. It might also be useful simply where an improved sort order of channels is required
+These features can prove useful where:
 
-This script has been **tested with vaderstreams** m3u and epg files pulled from:
+1. You have an underpowered device where SPMC / KODI / some other app running on that device is struggling to download and process very large m3u / epg files
+2. Your service provider supplies you with a url that returns an m3u file containing both live TV channels and VOD content in that one file and you want to filter it to contain only live TV channels
+3. You just want to achieve a filtered list and an improved custom sort order of TV channels
 
-1. [http://api.vaders.tv/vget?username=[USERNAME]&password=[PASSWORD]&format=ts](http://api.vaders.tv/vget?username=[USERNAME]&password=[PASSWORD]&format=ts) (m3u file)
-2. [http://vaders.tv/p2.xml.gz](http://vaders.tv/p2.xml.gz) (epg file)
+This script has been tested with the following IPTV providers:
 
-   It is worth highlighting that vaderstreams do support filtering of their m3u in the HTTP GET request/response via the `filterCategory` query string parameter i.e. the following request will remove all of the specified filterCategory groups in the returned m3u response:
+1. **VaderStreams**
+2. **FabIPTV**
 
-   [http://api.vaders.tv/vget?username=[USERNAME]&password=[PASSWORD]&filterCategory=Afghani,Arabic,Bangla,Canada,Filipino,France,Germany,Gujrati,India,Ireland,Italy,Latino,Live%20Events,Malayalam,Marathi,Pakistan,Portugal,Punjabi,Spain,Tamil,United%20States,United%20States%20Regionals&format=ts](http://api.vaders.tv/vget?username=[USERNAME]&password=[PASSWORD]&filterCategory=Afghani,Arabic,Bangla,Canada,Filipino,France,Germany,Gujrati,India,Ireland,Italy,Latino,Live%20Events,Malayalam,Marathi,Pakistan,Portugal,Punjabi,Spain,Tamil,United%20States,United%20States%20Regionals&format=ts)
+It is worth noting that VaderStreams do support a unique feature to enable filtering groups within their m3u in the HTTP GET request/response via a `filterCategory` query string parameter. However there are some issues that are common to all IPTV service providers where there is no obvious, easy or free solution:
 
-However there are some things where there is no obvious, easy or indeed completely free solution:
+1. There is no method to remove specific channels within categories / groups
+2. There is no method to re-order / sort channels within categories / groups to achieve a desired custom sort order
+3. There is no method to reduce the volume of data within the epg to include only those channels that are required
+4. There is no method to reduce the time window of data within the epg
 
-1. vaderstreams does provide any method to remove specific channels within categories / groups
-2. vaderstreams does provide any method to re-order / sort channels within categories / groups to achieve a desired custom sort order
-3. vaderstreams does provide any method to reduce the volume of data within the epg to include only those channels that are required
-4. vaderstreams does provide any method to reduce the time window of data within the epg
+There are commercially available online services that can solve these problems for a monthly / yearly subscription free.
 
-m3u-epg-editor solves these problems
+m3u-epg-editor solves these problems for free on your own network / computer(s).
 
 ***
 
@@ -78,11 +78,15 @@ optional arguments:
                         The output filename for the generated files
 ```
 
-#### sample usage call:
+#### sample usage calls (urls intentionally incomplete):
+**VaderStreams:**
 ```
-$ python ./m3u-epg-editor.py -m="http://api.vaders.tv/vget?username=<USERNAME>&password=<PASSWORD>&format=ts" -e="http://vaders.tv/p2.xml.gz" -g="'sports','premium movies'" -c="'willow hd','bein sports espanol hd'" -r=12 -d="/home/target_directory" -f="output_file"
+$ python ./m3u-epg-editor.py -m="http://xxx.xxx.xxx/vget?username=<USERNAME>&password=<PASSWORD>&format=ts" -e="http://xxx.xxx/p2.xml.gz" -g="'sports','premium movies'" -c="'willow hd','bein sports espanol hd'" -r=12 -d="/home/target_directory" -f="output_file"
 ```
-
+**FabIPTV:**
+```
+python ./m3u-epg-editor.py -m="http://xxx.xxx:8080/get.php?username=<USERNAME>&password=<PASSWORD>&type=m3u_plus&output=ts" -e="http://xxx.xxx:8080/xmltv.php?username=<USERNAME>&password=<PASSWORD>" -g="'uk + 1 channels','uk bt sport','uk documentaries','uk entertainment','uk movies','uk other sports','uk sky sports'" -c="'dave hd'" -r=12 -d="/home/target_directory" -f="output_file"
+```
 ***
 
 #### files created by this script:

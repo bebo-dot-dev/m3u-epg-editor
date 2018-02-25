@@ -180,7 +180,8 @@ def parse_m3u(m3u_filename):
             entry = M3uItem(m3u_fields)
         elif len(line) != 0:
             entry.url = line
-            m3u_entries.append(entry)
+            if entry.tvg_id != "":
+                m3u_entries.append(entry)
             entry = M3uItem(None)
 
     m3u_file.close()
@@ -206,7 +207,7 @@ def filter_m3u_entries(args, m3u_entries):
                 if m3u_entry.group_title.lower() in args.groups and not m3u_entry.tvg_name.lower() in args.channels:
                     filtered_m3u_entries.append(m3u_entry)
                     filtered_channels_file.write("'%s'\n" % m3u_entry.tvg_name.lower())
-                all_channels_file.write("'%s'\n" % m3u_entry.tvg_name.lower())
+                all_channels_file.write("'%s','%s'\n" % (m3u_entry.tvg_name.lower(), m3u_entry.group_title.lower()))
 
     output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
     return filtered_m3u_entries
@@ -244,9 +245,11 @@ def save_new_m3u(args, m3u_entries):
 def load_epg(args):
     epg_response = get_epg(args.epgurl)
     if epg_response.status_code == 200:
-        epg_filename = save_original_epg(args.outdirectory, epg_response)
+        is_gzipped = args.epgurl.endswith(".gz")
+        epg_filename = save_original_epg(is_gzipped, args.outdirectory, epg_response)
         epg_response.close()
-        epg_filename = extract_original_epg(args.outdirectory, epg_filename)
+        if is_gzipped:
+            epg_filename = extract_original_epg(args.outdirectory, epg_filename)
         return epg_filename
     else:
         epg_response.close()
@@ -260,12 +263,12 @@ def get_epg(epg_url):
 
 
 # saves the HTTP GET response to the file system
-def save_original_epg(out_directory, epg_response):
-    epg_target = os.path.join(out_directory, "original.gz")
+def save_original_epg(is_gzipped, out_directory, epg_response):
+    epg_target = os.path.join(out_directory, "original.gz" if is_gzipped else "original.xml")
     output_str("saving retrieved epg file: " + epg_target)
-    with open(epg_target, "wb") as gz_file:
+    with open(epg_target, "wb") as epg_file:
         epg_response.raw.decode_content = True
-        shutil.copyfileobj(epg_response.raw, gz_file)
+        shutil.copyfileobj(epg_response.raw, epg_file)
         return epg_target
 
 
