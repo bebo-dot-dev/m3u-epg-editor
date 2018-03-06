@@ -155,7 +155,7 @@ def get_m3u(m3u_url):
 
 # saves the HTTP GET response to the file system
 def save_original_m3u(out_directory, m3u_response):
-    m3u_target = os.path.join(out_directory, "original.m3u")
+    m3u_target = os.path.join(out_directory, "original.m3u8")
     output_str("saving retrieved m3u file: " + m3u_target)
     with open(m3u_target, "w") as text_file:
         text_file.write(m3u_response.content)
@@ -229,7 +229,7 @@ def sort_m3u_entries(args, m3u_entries):
 # saves the given m3u_entries into the file system
 def save_new_m3u(args, m3u_entries):
     if m3u_entries is not None:
-        m3u_target = os.path.join(args.outdirectory, args.outfilename + ".m3u")
+        m3u_target = os.path.join(args.outdirectory, args.outfilename + ".m3u8")
         output_str("saving new m3u file: " + m3u_target)
         with open(m3u_target, "w") as text_file:
             text_file.write("%s\n" % "#EXTM3U")
