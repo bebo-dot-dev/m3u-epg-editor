@@ -128,7 +128,11 @@ def abort_process(reason, exitcode):
 
 # helper print function with timestamp
 def output_str(event_str):
-    print("%s %s" % (datetime.datetime.now().isoformat(), event_str))
+    try:
+        print("%s %s" % (datetime.datetime.now().isoformat(), event_str))
+    except IOError as e:
+        if e.errno != 0:
+            print "I/O error({0}): {1} for event string '{2}'".format(e.errno, e.strerror, event_str)
 
 
 ########################################################################################################################
