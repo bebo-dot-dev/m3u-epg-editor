@@ -1,14 +1,20 @@
 """
 This a python m3u / epg file optimizer script
-It implements a method to download m3u / epg files from a remote web server and to "trim" or optimize
-these files to a set of wanted channel groups
+This script enables download of m3u / epg files from a remote web server and introduces features to trim / optimize
+these files to a set of wanted channel groups and channels along with the ability to sort / reorder channels
 
-This can be useful on underpowered devices where SPMC/KODI/some other app running on that device might struggle
+This can prove useful on underpowered devices where SPMC / KODI / some other app running on that device might struggle
 to load a very large m3u / epg file
 
-This script has been tested with vaderstreams m3u and epg files pulled from:
-    http://api.vaders.tv/vget?username=<USERNAME>&password=<PASSWORD>&format=ts
-    http://vaders.tv/p2.xml.gz
+This script has been tested with:
+
+1. vaderstreams m3u and epg files pulled from:
+    http://<VADERSTREAMS_DOMAIN>/epg/vget?username=<USERNAME>&password=<PASSWORD>
+    http://<VADERSTREAMS_DOMAIN>/p2.xml.gz
+
+2. fab m3u and epg files pulled from:
+    http://<FAB_DOMAIN>/get.php?username=<USERNAME>&password=<PASSWORD>&type=m3u_plus&output=ts
+    http://<FAB_DOMAIN>/xmltv.php?username=<USERNAME>&password=<PASSWORD>
 """
 
 import sys
@@ -342,37 +348,40 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
         if entry.tvg_id is not None and entry.tvg_id != "" and entry.tvg_id != "None":
             output_str("creating programme elements for {}".format(entry.tvg_name))
             channel_xpath = 'programme[@channel="' + entry.tvg_id + '"]'
-            for elem in original_tree.iterfind(channel_xpath):
-                if is_in_range(args, elem):
-                    programme = SubElement(new_root, elem.tag)
-                    for attr_key in elem.keys():
-                        attr_val = elem.get(attr_key)
-                        programme.set(attr_key, attr_val)
-                    for sub_elem in elem:
-                        new_elem = SubElement(programme, sub_elem.tag)
-                        new_elem.text = sub_elem.text
-                        for attr_key in sub_elem.keys():
-                            attr_val = sub_elem.get(attr_key)
-                            new_elem.set(attr_key, attr_val)
+            channel_programmes = original_tree.findall(channel_xpath)
+            if len(channel_programmes) > 0:
+                for elem in channel_programmes:
+                    if is_in_range(args, elem):
+                        programme = SubElement(new_root, elem.tag)
+                        for attr_key in elem.keys():
+                            attr_val = elem.get(attr_key)
+                            programme.set(attr_key, attr_val)
+                        for sub_elem in elem:
+                            new_elem = SubElement(programme, sub_elem.tag)
+                            new_elem.text = sub_elem.text
+                            for attr_key in sub_elem.keys():
+                                attr_val = sub_elem.get(attr_key)
+                                new_elem.set(attr_key, attr_val)
+            else:
+                no_epg_channels.append(entry)
         else:
-            no_epg_channels.append("'{}'".format(entry.tvg_name.lower()))
+            no_epg_channels.append(entry)
 
     indent(new_root)
     tree = ElementTree(new_root)
 
-    save_no_epg_channels(args, no_epg_channels)
+    if len(no_epg_channels) > 0:
+        save_no_epg_channels(args, no_epg_channels)
 
     return tree
 
 
 # saves the no_epg_channels list into the file system
 def save_no_epg_channels(args, no_epg_channels):
-    csv = ''
-    no_epg_channels_file = os.path.join(args.outdirectory, "no_epg_channels.txt")
-    if len(no_epg_channels) > 0:
-        csv = ",".join(no_epg_channels)
-    with open(no_epg_channels_file, "w") as text_file:
-        text_file.write(csv)
+    no_epg_channels_target = os.path.join(args.outdirectory, "no_epg_channels.txt")
+    with open(no_epg_channels_target, "w") as no_epg_channels_file:
+        for m3u_entry in no_epg_channels:
+            no_epg_channels_file.write("'%s','%s'\n" % (m3u_entry.tvg_name.lower(), m3u_entry.tvg_id))
 
 
 # saves the epg xml document represented by xml_tree into the file system
