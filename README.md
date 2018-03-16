@@ -91,7 +91,7 @@ $ python ./m3u-epg-editor.py -m="http://xxx.xxx:8080/get.php?username=<USERNAME>
 
 #### files created by this script:
 
-![files](https://github.com/jjssoftware/m3u-epg-editor/blob/master/screenshots/files-screenshot-2018-01-23-21.57.28.png)
+![files](./screenshots/files-screenshot-2018-01-23-21.57.28.png)
 
 Each time this script is run, the following files will be created / overwritten in the specified `--outdirectory / -d` path:
 
