@@ -42,11 +42,14 @@ class M3uItem:
         self.sort_order = 0
 
         if m3u_fields is not None:
-            self.tvg_name = re.search('tvg-name="(.*?)"', m3u_fields).group(1)
-            self.tvg_id = re.search('tvg-id="(.*?)"', m3u_fields).group(1)
-            self.tvg_logo = re.search('tvg-logo="(.*?)"', m3u_fields).group(1)
-            self.group_title = re.search('group-title="(.*?)"', m3u_fields).group(1)
-            self.name = m3u_fields.split(",")[1]
+            try:
+                self.tvg_name = re.search('tvg-name="(.*?)"', m3u_fields, re.IGNORECASE).group(1)
+                self.tvg_id = re.search('tvg-id="(.*?)"', m3u_fields, re.IGNORECASE).group(1)
+                self.tvg_logo = re.search('tvg-logo="(.*?)"', m3u_fields, re.IGNORECASE).group(1)
+                self.group_title = re.search('group-title="(.*?)"', m3u_fields, re.IGNORECASE).group(1)
+                self.name = m3u_fields.split(",")[1]
+            except AttributeError as e:
+                output_str("m3u file parse AttributeError: {0}".format(e))
 
 
 class FileUriAdapter(requests.adapters.BaseAdapter):
