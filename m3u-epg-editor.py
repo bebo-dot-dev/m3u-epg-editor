@@ -28,6 +28,7 @@ import gzip
 from xml.etree.cElementTree import Element, SubElement, parse, ElementTree
 import datetime
 import dateutil.parser
+from urllib import url2pathname
 
 
 class M3uItem:
@@ -41,12 +42,62 @@ class M3uItem:
         self.sort_order = 0
 
         if m3u_fields is not None:
-            self.tvg_name = re.search('tvg-name="(.*?)"', m3u_fields).group(1)
-            self.tvg_id = re.search('tvg-id="(.*?)"', m3u_fields).group(1)
-            self.tvg_logo = re.search('tvg-logo="(.*?)"', m3u_fields).group(1)
-            self.group_title = re.search('group-title="(.*?)"', m3u_fields).group(1)
-            self.name = m3u_fields.split(",")[1]
+            try:
+                self.tvg_name = re.search('tvg-name="(.*?)"', m3u_fields, re.IGNORECASE).group(1)
+                self.tvg_id = re.search('tvg-id="(.*?)"', m3u_fields, re.IGNORECASE).group(1)
+                self.tvg_logo = re.search('tvg-logo="(.*?)"', m3u_fields, re.IGNORECASE).group(1)
+                self.group_title = re.search('group-title="(.*?)"', m3u_fields, re.IGNORECASE).group(1)
+                self.name = m3u_fields.split(",")[1]
+            except AttributeError as e:
+                output_str("m3u file parse AttributeError: {0}".format(e))
 
+
+class FileUriAdapter(requests.adapters.BaseAdapter):
+
+    @staticmethod
+    def chk_path(method, path):
+        # type: (object, object) -> object
+        if method.lower() in ('put', 'delete'):
+            return 501, "Not Implemented"
+        elif method.lower() not in ('get', 'head'):
+            return 405, "Method Not Allowed"
+        elif os.path.isdir(path):
+            return 400, "Path Not A File"
+        elif not os.path.isfile(path):
+            return 404, "File Not Found"
+        elif not os.access(path, os.R_OK):
+            return 403, "Access Denied"
+        else:
+            return 200, "OK"
+
+    def send(self, req, **kwargs):
+        path = os.path.normcase(os.path.normpath(url2pathname(req.path_url)))
+        response = requests.Response()
+
+        response.status_code, response.reason = self.chk_path(req.method, path)
+        if response.status_code == 200 and req.method.lower() != 'head':
+            try:
+                is_gzipped = path.lower().endswith(".gz")
+                if not is_gzipped:
+                    response.raw = open(path, 'rb')
+                else:
+                    response.raw = gzip.open(path, 'rb')
+            except (OSError, IOError) as err:
+                response.status_code = 500
+                response.reason = str(err)
+
+        if isinstance(req.url, bytes):
+            response.url = req.url.decode('utf-8')
+        else:
+            response.url = req.url
+
+        response.request = req
+        response.connection = self
+
+        return response
+
+    def close(self):
+        pass
 
 arg_parser = argparse.ArgumentParser(description='download and optimize m3u/epg files retrieved from a remote web server', formatter_class=argparse.RawTextHelpFormatter)
 arg_parser.add_argument('--m3uurl', '-m', nargs='?', help='The url to pull the m3u file from')
@@ -159,8 +210,15 @@ def load_m3u(args):
 # performs the HTTP GET
 def get_m3u(m3u_url):
     output_str("performing HTTP GET request to " + m3u_url)
-    r = requests.get(m3u_url)
-    return r
+
+    if m3u_url.lower().startswith('file'):
+        session = requests.session()
+        session.mount('file://', FileUriAdapter())
+        response = session.get(m3u_url)
+    else:
+        response = requests.get(m3u_url)
+
+    return response
 
 
 # saves the HTTP GET response to the file system
@@ -255,7 +313,7 @@ def save_new_m3u(args, m3u_entries):
 def load_epg(args):
     epg_response = get_epg(args.epgurl)
     if epg_response.status_code == 200:
-        is_gzipped = args.epgurl.endswith(".gz")
+        is_gzipped = args.epgurl.lower().endswith(".gz")
         epg_filename = save_original_epg(is_gzipped, args.outdirectory, epg_response)
         epg_response.close()
         if is_gzipped:
@@ -268,18 +326,30 @@ def load_epg(args):
 # performs the HTTP GET
 def get_epg(epg_url):
     output_str("performing HTTP GET request to " + epg_url)
-    r = requests.get(epg_url, stream=True)
-    return r
+
+    if epg_url.lower().startswith('file'):
+        session = requests.session()
+        session.mount('file://', FileUriAdapter())
+        response = session.get(epg_url)
+    else:
+        response = requests.get(epg_url, stream=True)
+
+    return response
 
 
 # saves the HTTP GET response to the file system
 def save_original_epg(is_gzipped, out_directory, epg_response):
     epg_target = os.path.join(out_directory, "original.gz" if is_gzipped else "original.xml")
     output_str("saving retrieved epg file: " + epg_target)
-    with open(epg_target, "wb") as epg_file:
-        epg_response.raw.decode_content = True
-        shutil.copyfileobj(epg_response.raw, epg_file)
-        return epg_target
+
+    with open(epg_target, "wb") if not isinstance(epg_response.raw, gzip.GzipFile) else gzip.open(epg_target, "wb") as epg_file:
+        if not isinstance(epg_response.raw, gzip.GzipFile):
+            epg_response.raw.decode_content = True
+            shutil.copyfileobj(epg_response.raw, epg_file)
+        else:
+            epg_file.write(epg_response.content)
+
+    return epg_target
 
 
 # extracts the given epg_filename and saves it to the file system
