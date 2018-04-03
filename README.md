@@ -30,6 +30,8 @@ m3u-epg-editor solves these problems for free on your own network / computer(s).
 #### dependencies:
 `python`
 
+The recommended python version is v2.7.14. Python v3 is **not** currently supported. Python installers can be downloaded from the official python website: [https://www.python.org/downloads/](https://www.python.org/downloads/). In linux, python can also be installed from a package repository with a package manager i.e. `apt`, `yum` etc or a software manager i.e. synaptic
+
 #### python modules used by this script:
 ```
 import sys
@@ -46,6 +48,14 @@ import dateutil.parser
 from urllib import url2pathname
 ```
 
+#### installing requests:
+The python `requests` module is not installed by default when python is installed. This script has a dependency on the requests module to enable HTTP requests to be performed; the requests module needs to be installed for this script to work.
+
+If the requests module is not installed you'll see a runtime error that looks something like this when you attempt to run the script:
+
+`ImportError: no module named requests`.
+
+The requests module can be installed with pip i.e. `pip install requests`
 ***
 
 #### command line options:
