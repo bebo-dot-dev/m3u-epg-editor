@@ -83,6 +83,8 @@ optional arguments:
                         An optional range window (in hours) to consider when adding programmes to the epg
   --sortchannels [SORTCHANNELS], -s [SORTCHANNELS]
                         The optional desired sort order for channels in the generated m3u
+  --tvh_offset [TVH_OFFSET], -t [TVH_OFFSET]
+                        An optional offset value applied to the Tvheadend tvh-chnum attribute within each channel group
   --outdirectory [OUTDIRECTORY], -d [OUTDIRECTORY]
                         The output folder where retrieved and generated file are to be stored
   --outfilename [OUTFILENAME], -f [OUTFILENAME]
