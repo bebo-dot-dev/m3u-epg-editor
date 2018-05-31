@@ -13,6 +13,7 @@ This script has been tested with the following IPTV providers:
 
 1. **VaderStreams**
 2. **FabIPTV**
+3. **NecroIPTV**
 
 It is worth noting that VaderStreams do support a unique feature to enable filtering groups within their m3u in the HTTP GET request/response via a `filterCategory` query string parameter. However there are some issues that are common to all IPTV service providers where there is no obvious, easy or free solution:
 
