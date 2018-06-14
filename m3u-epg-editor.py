@@ -52,6 +52,11 @@ class M3uItem:
             except AttributeError as e:
                 output_str("m3u file parse AttributeError: {0}".format(e))
 
+    def is_valid(self):
+        return self.tvg_name is not None and self.tvg_name != "" and \
+               self.tvg_id is not None and self.tvg_id != "" and \
+               self.group_title is not None and self.group_title != ""
+
 
 class FileUriAdapter(requests.adapters.BaseAdapter):
 
@@ -263,7 +268,7 @@ def parse_m3u(m3u_filename):
             entry = M3uItem(m3u_fields)
         elif len(line) != 0:
             entry.url = line
-            if entry.tvg_id != "":
+            if M3uItem.is_valid(entry):
                 m3u_entries.append(entry)
             entry = M3uItem(None)
 
