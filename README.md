@@ -65,6 +65,7 @@ $ python ./m3u-epg-editor.py --help
 usage: m3u-epg-editor.py [-h] [--m3uurl [M3UURL]] [--epgurl [EPGURL]]
                          [--groups [GROUPS]] [--channels [CHANNELS]]
                          [--range [RANGE]] [--sortchannels [SORTCHANNELS]]
+                         [--tvh_offset [TVH_OFFSET]] [--no_tvg_id] [--no_epg]
                          [--outdirectory [OUTDIRECTORY]]
                          [--outfilename [OUTFILENAME]]
 
@@ -81,11 +82,13 @@ optional arguments:
   --channels [CHANNELS], -c [CHANNELS]
                         Individual channels in the m3u to discard
   --range [RANGE], -r [RANGE]
-                        An optional range window (in hours) to consider when adding programmes to the epg
+                        An optional range window to consider when adding programmes to the epg
   --sortchannels [SORTCHANNELS], -s [SORTCHANNELS]
                         The optional desired sort order for channels in the generated m3u
   --tvh_offset [TVH_OFFSET], -t [TVH_OFFSET]
                         An optional offset value applied to the Tvheadend tvh-chnum attribute within each channel group
+  --no_tvg_id, -nt      Optionally allow channels with no tvg-id attribute to be considered as valid channels
+  --no_epg, -ne         Optionally prevent the download of and the creation of any EPG xml data
   --outdirectory [OUTDIRECTORY], -d [OUTDIRECTORY]
                         The output folder where retrieved and generated file are to be stored
   --outfilename [OUTFILENAME], -f [OUTFILENAME]
@@ -119,11 +122,11 @@ Each time this script is run, the following files will be created / overwritten 
    
 * **original.gz**
 
-   This is the original unmodified epg gzip file downloaded from the specified `--epgurl / -e` remote server
+   This is the original unmodified epg gzip file downloaded from the specified `--epgurl / -e` remote server. No EPG processing is performed when the optional `--no_epg / -ne` argument is supplied.
    
 * **original.xml**
 
-   This is the original unmodified epg xml file extracted from the original epg gzip file 
+   This is the original unmodified epg xml file extracted from the original epg gzip file. No EPG processing is performed when the optional `--no_epg / -ne` argument is supplied.
    
 * **[--outfilename].m3u**
 
@@ -135,7 +138,7 @@ Each time this script is run, the following files will be created / overwritten 
    
 * **[--outfilename].xml**
 
-   This is the new rewritten epg file created from the original epg file that contains epg data for all of the channels that you've decided to keep. If `--range / -r` was specified, epg data will be filtered to only include entries that fall within the range window of `range_start <= programme_start <= range_end`
+   This is the new rewritten epg file created from the original epg file that contains epg data for all of the channels that you've decided to keep. If `--range / -r` was specified, epg data will be filtered to only include entries that fall within the range window of `range_start <= programme_start <= range_end`. No EPG file will be created when the optional `--no_epg / -ne` argument is supplied.
    
 * **no_epg_channels.txt**
 

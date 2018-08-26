@@ -52,10 +52,12 @@ class M3uItem:
             except AttributeError as e:
                 output_str("m3u file parse AttributeError: {0}".format(e))
 
-    def is_valid(self):
-        return self.tvg_name is not None and self.tvg_name != "" and \
-               self.tvg_id is not None and self.tvg_id != "" and \
+    def is_valid(self, allow_no_tvg_id):
+        isvalid = self.tvg_name is not None and self.tvg_name != "" and \
                self.group_title is not None and self.group_title != ""
+        if not allow_no_tvg_id:
+            isvalid = isvalid and self.tvg_id is not None and self.tvg_id != ""
+        return isvalid
 
 
 class FileUriAdapter(requests.adapters.BaseAdapter):
@@ -119,6 +121,10 @@ arg_parser.add_argument('--sortchannels', '-s', nargs='?',
                         help='The optional desired sort order for channels in the generated m3u')
 arg_parser.add_argument('--tvh_offset', '-t', nargs='?',
                         help='An optional offset value applied to the Tvheadend tvh-chnum attribute within each channel group')
+arg_parser.add_argument('--no_tvg_id', '-nt', action='store_true',
+                        help='Optionally allow channels with no tvg-id attribute to be considered as valid channels')
+arg_parser.add_argument('--no_epg', '-ne', action='store_true',
+                        help='Optionally prevent the download of and the creation of any EPG xml data')
 arg_parser.add_argument('--outdirectory', '-d', nargs='?',
                         help='The output folder where retrieved and generated file are to be stored')
 arg_parser.add_argument('--outfilename', '-f', nargs='?', help='The output filename for the generated files')
@@ -136,11 +142,12 @@ def main():
 
         save_new_m3u(args, m3u_entries)
 
-        epg_filename = load_epg(args)
-        if epg_filename is not None:
-            xml_tree = create_new_epg(args, epg_filename, m3u_entries)
-            if xml_tree is not None:
-                save_new_epg(args, xml_tree)
+        if not args.no_epg:
+            epg_filename = load_epg(args)
+            if epg_filename is not None:
+                xml_tree = create_new_epg(args, epg_filename, m3u_entries)
+                if xml_tree is not None:
+                    save_new_epg(args, xml_tree)
 
 
 # parses and validates cli arguments passed to this script
@@ -150,7 +157,7 @@ def validate_args():
     if not args.m3uurl:
         abort_process('--m3uurl is mandatory', 1)
 
-    if not args.epgurl:
+    if not args.no_epg and not args.epgurl:
         abort_process('--epgurl is mandatory', 1)
 
     if not args.groups:
@@ -221,7 +228,7 @@ def load_m3u(args):
     if m3u_response.status_code == 200:
         m3u_filename = save_original_m3u(args.outdirectory, m3u_response)
         m3u_response.close()
-        m3u_entries = parse_m3u(m3u_filename)
+        m3u_entries = parse_m3u(m3u_filename, args.no_tvg_id)
         return m3u_entries
     else:
         m3u_response.close()
@@ -251,7 +258,7 @@ def save_original_m3u(out_directory, m3u_response):
 
 
 # parses the m3u file represented by m3u_filename into a list of M3uItem objects and returns them
-def parse_m3u(m3u_filename):
+def parse_m3u(m3u_filename, allow_no_tvg_id):
     output_str("parsing m3u into a list of objects")
     m3u_file = open(m3u_filename, 'r')
     line = m3u_file.readline()
@@ -268,7 +275,7 @@ def parse_m3u(m3u_filename):
             entry = M3uItem(m3u_fields)
         elif len(line) != 0:
             entry.url = line
-            if M3uItem.is_valid(entry):
+            if M3uItem.is_valid(entry, allow_no_tvg_id):
                 m3u_entries.append(entry)
             entry = M3uItem(None)
 
