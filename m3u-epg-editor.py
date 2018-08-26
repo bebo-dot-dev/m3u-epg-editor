@@ -125,6 +125,8 @@ arg_parser.add_argument('--no_tvg_id', '-nt', action='store_true',
                         help='Optionally allow channels with no tvg-id attribute to be considered as valid channels')
 arg_parser.add_argument('--no_epg', '-ne', action='store_true',
                         help='Optionally prevent the download of and the creation of any EPG xml data')
+arg_parser.add_argument('--no_sort', '-ns', action='store_true',
+                        help='Optionally disable all channel sorting functionality')
 arg_parser.add_argument('--outdirectory', '-d', nargs='?',
                         help='The output folder where retrieved and generated file are to be stored')
 arg_parser.add_argument('--outfilename', '-f', nargs='?', help='The output filename for the generated files')
@@ -138,7 +140,8 @@ def main():
     m3u_entries = filter_m3u_entries(args, m3u_entries)
 
     if m3u_entries is not None and len(m3u_entries) > 0:
-        m3u_entries = sort_m3u_entries(args, m3u_entries)
+        if not args.no_sort:
+            m3u_entries = sort_m3u_entries(args, m3u_entries)
 
         save_new_m3u(args, m3u_entries)
 
@@ -290,8 +293,9 @@ def filter_m3u_entries(args, m3u_entries):
     if len(args.channels) > 0:
         output_str("ignoring channels in this {}".format(str(args.channels)))
 
-    # sort the channels by name by default
-    m3u_entries = sorted(m3u_entries, key=lambda entry: entry.tvg_name)
+    if not args.no_sort:
+        # sort the channels by name by default
+        m3u_entries = sorted(m3u_entries, key=lambda entry: entry.tvg_name)
 
     filtered_m3u_entries = []
     all_channels_name_target = os.path.join(args.outdirectory, "original.channels.txt")

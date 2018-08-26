@@ -66,7 +66,7 @@ usage: m3u-epg-editor.py [-h] [--m3uurl [M3UURL]] [--epgurl [EPGURL]]
                          [--groups [GROUPS]] [--channels [CHANNELS]]
                          [--range [RANGE]] [--sortchannels [SORTCHANNELS]]
                          [--tvh_offset [TVH_OFFSET]] [--no_tvg_id] [--no_epg]
-                         [--outdirectory [OUTDIRECTORY]]
+                         [--no_sort] [--outdirectory [OUTDIRECTORY]]
                          [--outfilename [OUTFILENAME]]
 
 download and optimize m3u/epg files retrieved from a remote web server
@@ -89,6 +89,7 @@ optional arguments:
                         An optional offset value applied to the Tvheadend tvh-chnum attribute within each channel group
   --no_tvg_id, -nt      Optionally allow channels with no tvg-id attribute to be considered as valid channels
   --no_epg, -ne         Optionally prevent the download of and the creation of any EPG xml data
+  --no_sort, -ns        Optionally disable all channel sorting functionality
   --outdirectory [OUTDIRECTORY], -d [OUTDIRECTORY]
                         The output folder where retrieved and generated file are to be stored
   --outfilename [OUTFILENAME], -f [OUTFILENAME]
@@ -130,7 +131,7 @@ Each time this script is run, the following files will be created / overwritten 
    
 * **[--outfilename].m3u**
 
-   This is the new rewritten m3u file created from the original m3u file. This will contain all of the channels that you've decided to keep. Channels are optionally sorted according to the sort order specified in `--sortchannels / -s`
+   This is the new rewritten m3u file created from the original m3u file. This will contain all of the channels that you've decided to keep. Channels are optionally sorted according to the sort order specified in `--sortchannels / -s`. If `--no_sort / -ns` is specified, anything supplied in `--sortchannels / -s` is ignored.
    
 * **[--outfilename].channels.txt**
 
