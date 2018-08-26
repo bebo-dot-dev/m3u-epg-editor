@@ -101,7 +101,7 @@ optional arguments:
 ```
 
 #### Supplying arguments via a JSON configuration file:
-All runtime arguments can be supplied via the file described by the `--json_cfg / -j` path. There is a sample JSON configuration file here: ![files](./sample_input_args.json). When arguments are supplied via a JSON configuration file in the `--json_cfg / -j` argument, all arguments are expected to passed in that JSON configuration file and any arguments that are passed via the cli will be ignored. In other words, use `--json_cfg / -j` for all arguments or use individual arguments but do not attempt to use both.
+All runtime arguments can be supplied via the file described by the `--json_cfg / -j` path. There is a sample JSON configuration file [here](./sample_input_args.json). When arguments are supplied via a JSON configuration file in the `--json_cfg / -j` argument, all arguments are expected to passed in that JSON configuration file and any arguments that are passed via the cli will be ignored. In other words, use `--json_cfg / -j` for all arguments or use individual arguments but do not attempt to use both.
 
 #### sample usage calls (urls intentionally incomplete):
 **VaderStreams:**
