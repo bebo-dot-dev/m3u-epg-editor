@@ -38,6 +38,7 @@ The recommended python version is v2.7.14. Python v3 is **not** currently suppor
 import sys
 import os
 import argparse
+import json
 import ast
 import requests
 import re
@@ -62,9 +63,10 @@ The requests module can be installed with pip i.e. `pip install requests`
 #### command line options:
 ```
 $ python ./m3u-epg-editor.py --help
-usage: m3u-epg-editor.py [-h] [--m3uurl [M3UURL]] [--epgurl [EPGURL]]
-                         [--groups [GROUPS]] [--channels [CHANNELS]]
-                         [--range [RANGE]] [--sortchannels [SORTCHANNELS]]
+usage: m3u-epg-editor.py [-h] [--json_cfg [JSON_CFG]] [--m3uurl [M3UURL]]
+                         [--epgurl [EPGURL]] [--groups [GROUPS]]
+                         [--channels [CHANNELS]] [--range [RANGE]]
+                         [--sortchannels [SORTCHANNELS]]
                          [--tvh_offset [TVH_OFFSET]] [--no_tvg_id] [--no_epg]
                          [--no_sort] [--outdirectory [OUTDIRECTORY]]
                          [--outfilename [OUTFILENAME]]
@@ -73,6 +75,8 @@ download and optimize m3u/epg files retrieved from a remote web server
 
 optional arguments:
   -h, --help            show this help message and exit
+  --json_cfg [JSON_CFG], -j [JSON_CFG]
+                        A json input configuration file containing argument values
   --m3uurl [M3UURL], -m [M3UURL]
                         The url to pull the m3u file from
   --epgurl [EPGURL], -e [EPGURL]
@@ -95,6 +99,9 @@ optional arguments:
   --outfilename [OUTFILENAME], -f [OUTFILENAME]
                         The output filename for the generated files
 ```
+
+#### Supplying arguments via a JSON configuration file:
+All runtime arguments can be supplied via the file described by the `--json_cfg / -j` path. There is a sample JSON configuration file here: ![files](./sample_input_args.json). When arguments are supplied via a JSON configuration file in the `--json_cfg / -j` argument, all arguments are expected to passed in that JSON configuration file and any arguments that are passed via the cli will be ignored. In other words, use `--json_cfg / -j` for all arguments or use individual arguments but do not attempt to use both.
 
 #### sample usage calls (urls intentionally incomplete):
 **VaderStreams:**

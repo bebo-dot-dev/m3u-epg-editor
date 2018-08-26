@@ -20,6 +20,7 @@ This script has been tested with:
 import sys
 import os
 import argparse
+import json
 import ast
 import requests
 import re
@@ -111,6 +112,7 @@ class FileUriAdapter(requests.adapters.BaseAdapter):
 arg_parser = argparse.ArgumentParser(
     description='download and optimize m3u/epg files retrieved from a remote web server',
     formatter_class=argparse.RawTextHelpFormatter)
+arg_parser.add_argument('--json_cfg', '-j', nargs='?', help='A json input configuration file containing argument values')
 arg_parser.add_argument('--m3uurl', '-m', nargs='?', help='The url to pull the m3u file from')
 arg_parser.add_argument('--epgurl', '-e', nargs='?', help='The url to pull the epg file from')
 arg_parser.add_argument('--groups', '-g', nargs='?', help='Channel groups in the m3u to keep')
@@ -157,6 +159,9 @@ def main():
 def validate_args():
     args = arg_parser.parse_args()
 
+    if args.json_cfg:
+        args = hydrate_args_from_json(args, args.json_cfg)
+
     if not args.m3uurl:
         abort_process('--m3uurl is mandatory', 1)
 
@@ -166,31 +171,32 @@ def validate_args():
     if not args.groups:
         abort_process('--groups is mandatory', 1)
 
-    set_str = '([' + args.groups.lower() + '])'
-    args.group_idx = list(ast.literal_eval(set_str))
-    args.groups = set(ast.literal_eval(set_str))
+    if not args.json_cfg:
+        set_str = '([' + args.groups.lower() + '])'
+        args.group_idx = list(ast.literal_eval(set_str))
+        args.groups = set(ast.literal_eval(set_str))
 
-    if args.channels:
-        set_str = '([' + args.channels + '])'
-        args.channels = set(ast.literal_eval(set_str))
-    else:
-        args.channels = set()
+        if args.channels:
+            set_str = '([' + args.channels + '])'
+            args.channels = set(ast.literal_eval(set_str))
+        else:
+            args.channels = set()
 
-    if args.range:
-        args.range = int(args.range)
-    else:
-        args.range = 168
+        if args.range:
+            args.range = int(args.range)
+        else:
+            args.range = 168
 
-    if args.sortchannels:
-        list_str = '([' + args.sortchannels + '])'
-        args.sortchannels = list(ast.literal_eval(list_str))
-    else:
-        args.sortchannels = []
+        if args.sortchannels:
+            list_str = '([' + args.sortchannels + '])'
+            args.sortchannels = list(ast.literal_eval(list_str))
+        else:
+            args.sortchannels = []
 
-    if args.tvh_offset:
-        args.tvh_offset = int(args.tvh_offset)
-    else:
-        args.tvh_offset = 0
+        if args.tvh_offset:
+            args.tvh_offset = int(args.tvh_offset)
+        else:
+            args.tvh_offset = 0
 
     if not args.outdirectory:
         abort_process('--outdirectory is mandatory', 1)
@@ -205,6 +211,50 @@ def validate_args():
         abort_process('--outfilename is mandatory', 1)
 
     return args
+
+
+# hydrates the runtime args from the json file described by json_cfg_file_path
+def hydrate_args_from_json(args, json_cfg_file_path):
+    with open(json_cfg_file_path) as json_cfg_file:
+        json_data = json.load(json_cfg_file)
+
+        args.m3uurl = json_data["m3uurl"]
+        args.epgurl = json_data["epgurl"]
+        args.group_idx = json_data["groups"]
+        args.groups = set(args.group_idx)
+
+        if "channels" in json_data:
+            args.channels = set(json_data["channels"])
+        else:
+            args.channels = set()
+
+        if "range" in json_data:
+            args.range = json_data["range"]
+        else:
+            args.range = 168
+
+        if "sortchannels" in json_data:
+            args.sortchannels = json_data["sortchannels"]
+        else:
+            args.sortchannels = []
+
+        if "tvh_offset" in json_data:
+            args.tvh_offset = json_data["tvh_offset"]
+        else:
+            args.tvh_offset = 0
+
+        if "no_tvg_id" in json_data:
+            args.no_tvg_id = json_data["no_tvg_id"]
+        if "no_epg" in json_data:
+            args.no_epg = json_data["no_epg"]
+        if "no_sort" in json_data:
+            args.no_sort = json_data["no_sort"]
+
+        args.outdirectory = json_data["outdirectory"]
+        args.outfilename = json_data["outfilename"]
+
+    return args
+
 
 
 # controlled script abort mechanism

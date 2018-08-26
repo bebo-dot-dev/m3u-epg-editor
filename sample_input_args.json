@@ -1,0 +1,47 @@
+{
+    "m3uurl": "http://<VADERSTREAMS_DOMAIN>/epg/vget?username=<USERNAME>&password=<PASSWORD>",
+    "epgurl": "http:/<VADERSTREAMS_DOMAIN>/p2.xml.gz",
+    "groups": [
+        "sports"
+    ],
+    "channels": [
+        "willow hd",
+        "bein sports espanol hd"
+    ],
+    "range": 12,
+    "sortchannels": [
+        "sky sports action 4k",
+        "sky sports action hd",
+        "sky sports arena",
+        "sky sports arena 4k",
+        "sky sports arena hd",
+        "sky sports cricket 4k",
+        "sky sports cricket hd",
+        "sky sports f1 4k",
+        "sky sports f1 hd",
+        "sky sports football",
+        "sky sports football 4k",
+        "sky sports football hd",
+        "sky sports golf",
+        "sky sports golf 4k",
+        "sky sports golf hd",
+        "sky sports main event",
+        "sky sports main event 4k",
+        "sky sports main event hd",
+        "sky sports mix",
+        "sky sports mix 4k",
+        "sky sports mix hd",
+        "sky sports news",
+        "sky sports news 4k",
+        "sky sports news hd",
+        "sky sports premier league",
+        "sky sports premier league 4k",
+        "sky sports premier league hd"
+    ],
+    "tvh_offset": 0,
+    "no_tvg_id": false,
+    "no_epg": false,
+    "no_sort": false,
+    "outdirectory": "/home/target_directory",
+    "outfilename": "output_file"
+}
