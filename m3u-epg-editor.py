@@ -116,7 +116,7 @@ arg_parser.add_argument('--json_cfg', '-j', nargs='?', help='A json input config
 arg_parser.add_argument('--m3uurl', '-m', nargs='?', help='The url to pull the m3u file from')
 arg_parser.add_argument('--epgurl', '-e', nargs='?', help='The url to pull the epg file from')
 arg_parser.add_argument('--groups', '-g', nargs='?', help='Channel groups in the m3u to keep')
-arg_parser.add_argument('--channels', '-c', nargs='?', help='Individual channels in the m3u to discard')
+arg_parser.add_argument('--channels', '-c', nargs='?', help='Channels in the m3u to discard. Regex pattern matching is supported')
 arg_parser.add_argument('--range', '-r', nargs='?',
                         help='An optional range window to consider when adding programmes to the epg')
 arg_parser.add_argument('--sortchannels', '-s', nargs='?',
@@ -178,9 +178,9 @@ def validate_args():
 
         if args.channels:
             set_str = '([' + args.channels + '])'
-            args.channels = set(ast.literal_eval(set_str))
+            args.channels = list(ast.literal_eval(set_str))
         else:
-            args.channels = set()
+            args.channels = list()
 
         if args.range:
             args.range = int(args.range)
@@ -224,9 +224,9 @@ def hydrate_args_from_json(args, json_cfg_file_path):
         args.groups = set(args.group_idx)
 
         if "channels" in json_data:
-            args.channels = set(json_data["channels"])
+            args.channels = json_data["channels"]
         else:
-            args.channels = set()
+            args.channels = list()
 
         if "range" in json_data:
             args.range = json_data["range"]
@@ -339,9 +339,9 @@ def parse_m3u(m3u_filename, allow_no_tvg_id):
 
 # filters the given m3u_entries using the supplied groups
 def filter_m3u_entries(args, m3u_entries):
-    output_str("keeping channel groups in this list{}".format(str(args.group_idx)))
+    output_str("keeping channel groups in this list {}".format(str(args.group_idx)))
     if len(args.channels) > 0:
-        output_str("ignoring channels in this {}".format(str(args.channels)))
+        output_str("ignoring channels in this list {}".format(str(args.channels)))
 
     if not args.no_sort:
         # sort the channels by name by default
@@ -353,7 +353,8 @@ def filter_m3u_entries(args, m3u_entries):
     with open(all_channels_name_target, "w") as all_channels_file:
         with open(filtered_channels_name_target, "w") as filtered_channels_file:
             for m3u_entry in m3u_entries:
-                if m3u_entry.group_title.lower() in args.groups and not m3u_entry.tvg_name.lower() in args.channels:
+                channel_ignored = is_channel_ignored(args.channels, m3u_entry.tvg_name)
+                if m3u_entry.group_title.lower() in args.groups and not channel_ignored:
                     filtered_m3u_entries.append(m3u_entry)
                     filtered_channels_file.write(
                         "'%s','%s'\n" % (m3u_entry.tvg_name.lower(), m3u_entry.group_title.lower()))
@@ -361,6 +362,20 @@ def filter_m3u_entries(args, m3u_entries):
 
     output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
     return filtered_m3u_entries
+
+
+# returns an indicator that describes whether the given channel_name is in the given ignore_channels list
+def is_channel_ignored(ignore_channels, channel_name):
+    ignored = False
+    if len(ignore_channels) > 0:
+        # try an exact match
+        ignored = channel_name.lower() in ignore_channels
+
+        if not ignored:
+            # try a regex match against all ignore_channels items
+            ignored = any(re.search(regex_str, channel_name) for regex_str in ignore_channels)
+
+    return ignored
 
 
 # sorts the given m3u_entries using the supplied args.groups and args.sortchannels

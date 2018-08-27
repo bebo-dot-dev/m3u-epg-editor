@@ -84,7 +84,7 @@ optional arguments:
   --groups [GROUPS], -g [GROUPS]
                         Channel groups in the m3u to keep
   --channels [CHANNELS], -c [CHANNELS]
-                        Individual channels in the m3u to discard
+                        Channels in the m3u to discard. Regex pattern matching is supported
   --range [RANGE], -r [RANGE]
                         An optional range window to consider when adding programmes to the epg
   --sortchannels [SORTCHANNELS], -s [SORTCHANNELS]
