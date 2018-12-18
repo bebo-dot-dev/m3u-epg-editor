@@ -312,13 +312,15 @@ def save_original_m3u(out_directory, m3u_response):
 
 # parses the m3u file represented by m3u_filename into a list of M3uItem objects and returns them
 def parse_m3u(m3u_filename, allow_no_tvg_id):
+    m3u_entries = []
     output_str("parsing m3u into a list of objects")
     m3u_file = open(m3u_filename, 'r')
     line = m3u_file.readline()
-    if not line.startswith('#EXTM3U'):
-        return
 
-    m3u_entries = []
+    if not '#EXTM3U' in line:
+        output_str("{} doesn't start with #EXTM3U, it doesn't appear to be an M3U file".format(m3u_filename))
+        return m3u_entries
+
     entry = M3uItem(None)
 
     for line in m3u_file:
