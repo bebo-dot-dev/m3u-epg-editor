@@ -228,6 +228,9 @@ def hydrate_args_from_json(args, json_cfg_file_path):
         else:
             args.channels = list()
 
+        if not type(args.channels) is list:
+            abort_process('channels is expected to be a json array in {}'.format(json_cfg_file_path), 1)
+
         if "range" in json_data:
             args.range = json_data["range"]
         else:
@@ -237,6 +240,9 @@ def hydrate_args_from_json(args, json_cfg_file_path):
             args.sortchannels = json_data["sortchannels"]
         else:
             args.sortchannels = []
+
+        if not type(args.channels) is list:
+            abort_process('sortchannels is expected to be a json array in {}'.format(json_cfg_file_path), 1)
 
         if "tvh_offset" in json_data:
             args.tvh_offset = json_data["tvh_offset"]
