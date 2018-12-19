@@ -341,28 +341,29 @@ def parse_m3u(m3u_filename, allow_no_tvg_id):
 
 # filters the given m3u_entries using the supplied groups
 def filter_m3u_entries(args, m3u_entries):
-    output_str("keeping channel groups in this list {}".format(str(args.group_idx)))
-    if len(args.channels) > 0:
-        output_str("ignoring channels in this list {}".format(str(args.channels)))
-
-    if not args.no_sort:
-        # sort the channels by name by default
-        m3u_entries = sorted(m3u_entries, key=lambda entry: entry.tvg_name)
-
     filtered_m3u_entries = []
-    all_channels_name_target = os.path.join(args.outdirectory, "original.channels.txt")
-    filtered_channels_name_target = os.path.join(args.outdirectory, args.outfilename + ".channels.txt")
-    with open(all_channels_name_target, "w") as all_channels_file:
-        with open(filtered_channels_name_target, "w") as filtered_channels_file:
-            for m3u_entry in m3u_entries:
-                channel_ignored = is_channel_ignored(args.channels, m3u_entry.tvg_name)
-                if m3u_entry.group_title.lower() in args.groups and not channel_ignored:
-                    filtered_m3u_entries.append(m3u_entry)
-                    filtered_channels_file.write(
-                        "'%s','%s'\n" % (m3u_entry.tvg_name.lower(), m3u_entry.group_title.lower()))
-                all_channels_file.write("'%s','%s'\n" % (m3u_entry.tvg_name.lower(), m3u_entry.group_title.lower()))
+    if m3u_entries is not None and len(m3u_entries) > 0:
+        output_str("keeping channel groups in this list {}".format(str(args.group_idx)))
+        if len(args.channels) > 0:
+            output_str("ignoring channels in this list {}".format(str(args.channels)))
 
-    output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
+        if not args.no_sort:
+            # sort the channels by name by default
+            m3u_entries = sorted(m3u_entries, key=lambda entry: entry.tvg_name)
+
+        all_channels_name_target = os.path.join(args.outdirectory, "original.channels.txt")
+        filtered_channels_name_target = os.path.join(args.outdirectory, args.outfilename + ".channels.txt")
+        with open(all_channels_name_target, "w") as all_channels_file:
+            with open(filtered_channels_name_target, "w") as filtered_channels_file:
+                for m3u_entry in m3u_entries:
+                    channel_ignored = is_channel_ignored(args.channels, m3u_entry.tvg_name)
+                    if m3u_entry.group_title.lower() in args.groups and not channel_ignored:
+                        filtered_m3u_entries.append(m3u_entry)
+                        filtered_channels_file.write(
+                            "'%s','%s'\n" % (m3u_entry.tvg_name.lower(), m3u_entry.group_title.lower()))
+                    all_channels_file.write("'%s','%s'\n" % (m3u_entry.tvg_name.lower(), m3u_entry.group_title.lower()))
+
+        output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
     return filtered_m3u_entries
 
 
