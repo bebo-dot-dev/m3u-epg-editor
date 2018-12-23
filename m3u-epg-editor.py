@@ -55,7 +55,7 @@ class M3uItem:
 
     def is_valid(self, allow_no_tvg_id):
         isvalid = self.tvg_name is not None and self.tvg_name != "" and \
-               self.group_title is not None and self.group_title != ""
+                  self.group_title is not None and self.group_title != ""
         if not allow_no_tvg_id:
             isvalid = isvalid and self.tvg_id is not None and self.tvg_id != ""
         return isvalid
@@ -112,11 +112,13 @@ class FileUriAdapter(requests.adapters.BaseAdapter):
 arg_parser = argparse.ArgumentParser(
     description='download and optimize m3u/epg files retrieved from a remote web server',
     formatter_class=argparse.RawTextHelpFormatter)
-arg_parser.add_argument('--json_cfg', '-j', nargs='?', help='A json input configuration file containing argument values')
+arg_parser.add_argument('--json_cfg', '-j', nargs='?',
+                        help='A json input configuration file containing argument values')
 arg_parser.add_argument('--m3uurl', '-m', nargs='?', help='The url to pull the m3u file from')
 arg_parser.add_argument('--epgurl', '-e', nargs='?', help='The url to pull the epg file from')
 arg_parser.add_argument('--groups', '-g', nargs='?', help='Channel groups in the m3u to keep')
-arg_parser.add_argument('--channels', '-c', nargs='?', help='Channels in the m3u to discard. Regex pattern matching is supported')
+arg_parser.add_argument('--channels', '-c', nargs='?',
+                        help='Channels in the m3u to discard. Regex pattern matching is supported')
 arg_parser.add_argument('--range', '-r', nargs='?',
                         help='An optional range window to consider when adding programmes to the epg')
 arg_parser.add_argument('--sortchannels', '-s', nargs='?',
@@ -262,7 +264,6 @@ def hydrate_args_from_json(args, json_cfg_file_path):
     return args
 
 
-
 # controlled script abort mechanism
 def abort_process(reason, exitcode):
     output_str(reason)
@@ -323,7 +324,7 @@ def parse_m3u(m3u_filename, allow_no_tvg_id):
     m3u_file = open(m3u_filename, 'r')
     line = m3u_file.readline()
 
-    if not '#EXTM3U' in line:
+    if '#EXTM3U' not in line:
         output_str("{} doesn't start with #EXTM3U, it doesn't appear to be an M3U file".format(m3u_filename))
         return m3u_entries
 
@@ -437,8 +438,10 @@ def save_new_m3u(args, m3u_entries):
                         floor = (idx // args.tvh_offset)
                         idx = args.tvh_offset * (floor + 1)
                         idx += 1
-                    text_file.write('%s tvh-chnum="%s" tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
-                        "#EXTINF:-1", idx, entry.tvg_name, entry.tvg_id, entry.tvg_logo, entry.group_title, entry.name))
+                    text_file.write(
+                        '%s tvh-chnum="%s" tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
+                            "#EXTINF:-1", idx, entry.tvg_name, entry.tvg_id, entry.tvg_logo, entry.group_title,
+                            entry.name))
 
                 text_file.write('%s\n' % entry.url)
 
