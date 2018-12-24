@@ -31,6 +31,9 @@ import datetime
 import dateutil.parser
 from urllib import url2pathname
 
+log_enabled = False
+log_items = []
+
 
 class M3uItem:
     def __init__(self, m3u_fields):
@@ -134,6 +137,7 @@ arg_parser.add_argument('--no_sort', '-ns', action='store_true',
 arg_parser.add_argument('--outdirectory', '-d', nargs='?',
                         help='The output folder where retrieved and generated file are to be stored')
 arg_parser.add_argument('--outfilename', '-f', nargs='?', help='The output filename for the generated files')
+arg_parser.add_argument('--log_enabled', '-l', action='store_true', help='Optionally log script output to process.log')
 
 
 # main entry point
@@ -156,22 +160,25 @@ def main():
                 if xml_tree is not None:
                     save_new_epg(args, xml_tree)
 
+    save_log(args)
+
 
 # parses and validates cli arguments passed to this script
 def validate_args():
+    global log_enabled
     args = arg_parser.parse_args()
 
     if args.json_cfg:
         args = hydrate_args_from_json(args, args.json_cfg)
 
     if not args.m3uurl:
-        abort_process('--m3uurl is mandatory', 1)
+        abort_process('--m3uurl is mandatory', 1, args)
 
     if not args.no_epg and not args.epgurl:
-        abort_process('--epgurl is mandatory', 1)
+        abort_process('--epgurl is mandatory', 1, args)
 
     if not args.groups:
-        abort_process('--groups is mandatory', 1)
+        abort_process('--groups is mandatory', 1, args)
 
     if not args.json_cfg:
         set_str = '([' + args.groups.lower() + '])'
@@ -200,23 +207,26 @@ def validate_args():
         else:
             args.tvh_offset = 0
 
+        log_enabled = args.log_enabled
+
     if not args.outdirectory:
-        abort_process('--outdirectory is mandatory', 1)
+        abort_process('--outdirectory is mandatory', 1, args)
 
     out_directory = os.path.expanduser(args.outdirectory)
     if not os.path.exists(out_directory):
-        abort_process(out_directory + ' does not exist in your filesystem', 1)
+        abort_process(out_directory + ' does not exist in your filesystem', 1, args)
     elif not os.path.isdir(out_directory):
-        abort_process(out_directory + ' is not a folder in your filesystem', 1)
+        abort_process(out_directory + ' is not a folder in your filesystem', 1, args)
 
     if not args.outfilename:
-        abort_process('--outfilename is mandatory', 1)
+        abort_process('--outfilename is mandatory', 1, args)
 
     return args
 
 
 # hydrates the runtime args from the json file described by json_cfg_file_path
 def hydrate_args_from_json(args, json_cfg_file_path):
+    global log_enabled
     with open(json_cfg_file_path) as json_cfg_file:
         json_data = json.load(json_cfg_file)
 
@@ -231,7 +241,7 @@ def hydrate_args_from_json(args, json_cfg_file_path):
             args.channels = list()
 
         if not type(args.channels) is list:
-            abort_process('channels is expected to be a json array in {}'.format(json_cfg_file_path), 1)
+            abort_process('channels is expected to be a json array in {}'.format(json_cfg_file_path), 1, args)
 
         if "range" in json_data:
             args.range = json_data["range"]
@@ -244,7 +254,7 @@ def hydrate_args_from_json(args, json_cfg_file_path):
             args.sortchannels = []
 
         if not type(args.sortchannels) is list:
-            abort_process('sortchannels is expected to be a json array in {}'.format(json_cfg_file_path), 1)
+            abort_process('sortchannels is expected to be a json array in {}'.format(json_cfg_file_path), 1, args)
 
         if "tvh_offset" in json_data:
             args.tvh_offset = json_data["tvh_offset"]
@@ -258,22 +268,34 @@ def hydrate_args_from_json(args, json_cfg_file_path):
         if "no_sort" in json_data:
             args.no_sort = json_data["no_sort"]
 
-        args.outdirectory = json_data["outdirectory"]
-        args.outfilename = json_data["outfilename"]
+        if "outdirectory" in json_data:
+            args.outdirectory = json_data["outdirectory"]
+
+        if "outfilename" in json_data:
+            args.outfilename = json_data["outfilename"]
+
+        if "log_enabled" in json_data:
+            log_enabled = json_data["log_enabled"]
 
     return args
 
 
 # controlled script abort mechanism
-def abort_process(reason, exitcode):
+def abort_process(reason, exitcode, args):
     output_str(reason)
+    save_log(args)
     sys.exit(exitcode)
 
 
 # helper print function with timestamp
 def output_str(event_str):
+    global log_enabled
+    global log_items
     try:
-        print("%s %s" % (datetime.datetime.now().isoformat(), event_str))
+        log_item = "%s %s" % (datetime.datetime.now().isoformat(), event_str)
+        print(log_item)
+        if log_enabled:
+            log_items.append(log_item)
     except IOError as e:
         if e.errno != 0:
             print "I/O error({0}): {1} for event string '{2}'".format(e.errno, e.strerror, event_str)
@@ -606,6 +628,19 @@ def save_new_epg(args, xml_tree):
     epg_target = os.path.join(args.outdirectory, args.outfilename + ".xml")
     output_str("saving new epg xml file: " + epg_target)
     xml_tree.write(epg_target, encoding="UTF-8", xml_declaration=True)
+
+
+def save_log(args):
+    global log_enabled
+    global log_items
+
+    if log_enabled:
+        out_dir = args.outdirectory if args.outdirectory else os.path.dirname(os.path.realpath(__file__))
+        log_target = os.path.join(out_dir, "process.log")
+        output_str("saving to log: " + log_target)
+        with open(log_target, "w") as log_file:
+            for log_item in log_items:
+                log_file.write("{0}\n".format(log_item))
 
 
 if __name__ == '__main__':

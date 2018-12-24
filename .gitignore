@@ -4,3 +4,4 @@
 *.gz
 *.sh
 /test.json
+*.log

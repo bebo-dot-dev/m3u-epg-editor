@@ -69,7 +69,7 @@ usage: m3u-epg-editor.py [-h] [--json_cfg [JSON_CFG]] [--m3uurl [M3UURL]]
                          [--sortchannels [SORTCHANNELS]]
                          [--tvh_offset [TVH_OFFSET]] [--no_tvg_id] [--no_epg]
                          [--no_sort] [--outdirectory [OUTDIRECTORY]]
-                         [--outfilename [OUTFILENAME]]
+                         [--outfilename [OUTFILENAME]] [--log_enabled]
 
 download and optimize m3u/epg files retrieved from a remote web server
 
@@ -98,6 +98,7 @@ optional arguments:
                         The output folder where retrieved and generated file are to be stored
   --outfilename [OUTFILENAME], -f [OUTFILENAME]
                         The output filename for the generated files
+  --log_enabled, -l     Optionally log script output to process.log
 ```
 
 #### Supplying arguments via a JSON configuration file:
