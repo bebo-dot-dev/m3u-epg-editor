@@ -30,6 +30,7 @@ from xml.etree.cElementTree import Element, SubElement, parse, ElementTree
 import datetime
 import dateutil.parser
 from urllib import url2pathname
+from traceback import format_exception
 
 log_enabled = False
 log_items = []
@@ -143,6 +144,7 @@ arg_parser.add_argument('--log_enabled', '-l', action='store_true', help='Option
 # main entry point
 def main():
     args = validate_args()
+    output_str("process started")
 
     m3u_entries = load_m3u(args)
     m3u_entries = filter_m3u_entries(args, m3u_entries)
@@ -280,6 +282,17 @@ def hydrate_args_from_json(args, json_cfg_file_path):
     return args
 
 
+# global exception handler
+def handle_exception(exc_type, exc_value, exc_traceback):
+    ex_lines = format_exception(exc_type, exc_value, exc_traceback)
+    output_str(''.join(ex_lines))
+    abort_process('process terminated early due to an exception', 2, None)
+
+
+# runtime exception handler wire up
+sys.excepthook = handle_exception
+
+
 # controlled script abort mechanism
 def abort_process(reason, exitcode, args):
     output_str(reason)
@@ -295,10 +308,33 @@ def output_str(event_str):
         log_item = "%s %s" % (datetime.datetime.now().isoformat(), event_str)
         print(log_item)
         if log_enabled:
-            log_items.append(log_item)
+            log_items.append(log_item.strip())
+        return log_item.strip()
     except IOError as e:
         if e.errno != 0:
             print "I/O error({0}): {1} for event string '{2}'".format(e.errno, e.strerror, event_str)
+
+
+# saves the runtime log (if enabled)
+def save_log(args):
+    global log_enabled
+    global log_items
+
+    if log_enabled:
+        if args is not None and args.outdirectory is not None:
+            out_dir = args.outdirectory
+        else:
+            out_dir = os.path.dirname(os.path.realpath(__file__))
+
+        log_target = os.path.join(out_dir, "process.log")
+        output_str("saving to log: " + log_target)
+        with open(log_target, "w") as log_file:
+            for log_item in log_items:
+                log_file.write("{0}\n".format(log_item))
+            log_str = output_str("process completed")
+            log_file.write("{0}\n".format(log_str))
+    else:
+        output_str("process completed")
 
 
 ########################################################################################################################
@@ -628,19 +664,6 @@ def save_new_epg(args, xml_tree):
     epg_target = os.path.join(args.outdirectory, args.outfilename + ".xml")
     output_str("saving new epg xml file: " + epg_target)
     xml_tree.write(epg_target, encoding="UTF-8", xml_declaration=True)
-
-
-def save_log(args):
-    global log_enabled
-    global log_items
-
-    if log_enabled:
-        out_dir = args.outdirectory if args.outdirectory else os.path.dirname(os.path.realpath(__file__))
-        log_target = os.path.join(out_dir, "process.log")
-        output_str("saving to log: " + log_target)
-        with open(log_target, "w") as log_file:
-            for log_item in log_items:
-                log_file.write("{0}\n".format(log_item))
 
 
 if __name__ == '__main__':
