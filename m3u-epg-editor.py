@@ -512,7 +512,8 @@ def load_epg(args):
     epg_response = get_epg(args.epgurl)
     if epg_response.status_code == 200:
         is_gzipped = args.epgurl.lower().endswith(".gz")
-        epg_filename = save_original_epg(is_gzipped, args.outdirectory, epg_response)
+        is_http_response = args.epgurl.lower().startswith("http")
+        epg_filename = save_original_epg(is_gzipped, is_http_response, args.outdirectory, epg_response)
         epg_response.close()
         if is_gzipped:
             epg_filename = extract_original_epg(args.outdirectory, epg_filename)
@@ -535,16 +536,20 @@ def get_epg(epg_url):
     return response
 
 
-# saves the HTTP GET response to the file system
-def save_original_epg(is_gzipped, out_directory, epg_response):
+# saves the http / file GET response to the file system
+def save_original_epg(is_gzipped, is_http_response, out_directory, epg_response):
     epg_target = os.path.join(out_directory, "original.gz" if is_gzipped else "original.xml")
     output_str("saving retrieved epg file: " + epg_target)
 
     with open(epg_target, "wb") if not isinstance(epg_response.raw, gzip.GzipFile) else gzip.open(epg_target,
                                                                                                   "wb") as epg_file:
+
         if not isinstance(epg_response.raw, gzip.GzipFile):
-            epg_response.raw.decode_content = True
-            shutil.copyfileobj(epg_response.raw, epg_file)
+            if is_http_response:
+                epg_response.raw.decode_content = True
+                shutil.copyfileobj(epg_response.raw, epg_file)
+            else:
+                epg_file.write(epg_response.content)
         else:
             epg_file.write(epg_response.content)
 
@@ -644,9 +649,8 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
             save_no_epg_channels(args, no_epg_channels)
 
         return tree
-    except:
+    except Exception as e:
         # likely a mangled xml parse exception
-        e = sys.exc_info()[0]
         output_str("epg creation failure: {0}".format(e))
         return None
 
