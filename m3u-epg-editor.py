@@ -135,6 +135,9 @@ arg_parser.add_argument('--no_epg', '-ne', action='store_true',
                         help='Optionally prevent the download of and the creation of any EPG xml data')
 arg_parser.add_argument('--no_sort', '-ns', action='store_true',
                         help='Optionally disable all channel sorting functionality')
+arg_parser.add_argument('--http_for_images', '-hi', action='store_true',
+                        help='Optionally prevent image attributes being populated where the source contains anything '
+                             'other than a http url i.e. data:image uri content')
 arg_parser.add_argument('--outdirectory', '-d', nargs='?',
                         help='The output folder where retrieved and generated file are to be stored')
 arg_parser.add_argument('--outfilename', '-f', nargs='?', help='The output filename for the generated files')
@@ -269,6 +272,8 @@ def hydrate_args_from_json(args, json_cfg_file_path):
             args.no_epg = json_data["no_epg"]
         if "no_sort" in json_data:
             args.no_sort = json_data["no_sort"]
+        if "http_for_images" in json_data:
+            args.http_for_images = json_data["http_for_images"]
 
         if "outdirectory" in json_data:
             args.outdirectory = json_data["outdirectory"]
@@ -485,9 +490,15 @@ def save_new_m3u(args, m3u_entries):
             group_title = m3u_entries[0].group_title
 
             for entry in m3u_entries:
+
+                if args.http_for_images:
+                    logo = entry.tvg_logo if entry.tvg_logo.startswith("http") else ""
+                else:
+                    logo = entry.tvg_logo
+
                 if args.tvh_offset == 0:
                     text_file.write('%s tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
-                        "#EXTINF:-1", entry.tvg_name, entry.tvg_id, entry.tvg_logo, entry.group_title, entry.name))
+                        "#EXTINF:-1", entry.tvg_name, entry.tvg_id, logo, entry.group_title, entry.name))
                 else:
                     if entry.group_title == group_title:
                         idx += 1
@@ -498,7 +509,7 @@ def save_new_m3u(args, m3u_entries):
                         idx += 1
                     text_file.write(
                         '%s tvh-chnum="%s" tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
-                            "#EXTINF:-1", idx, entry.tvg_name, entry.tvg_id, entry.tvg_logo, entry.group_title,
+                            "#EXTINF:-1", idx, entry.tvg_name, entry.tvg_id, logo, entry.group_title,
                             entry.name))
 
                 text_file.write('%s\n' % entry.url)
@@ -615,6 +626,8 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                     new_elem.text = elem.text
                     for attr_key in elem.keys():
                         attr_val = elem.get(attr_key)
+                        if elem.tag.lower() == "icon" and args.http_for_images:
+                            attr_val = attr_val if attr_val.startswith("http") else ""
                         new_elem.set(attr_key, attr_val)
 
         # now copy all programme elements from the original epg for every channel present in the m3u
