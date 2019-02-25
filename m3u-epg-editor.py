@@ -127,8 +127,12 @@ arg_parser.add_argument('--range', '-r', nargs='?',
                         help='An optional range window to consider when adding programmes to the epg')
 arg_parser.add_argument('--sortchannels', '-s', nargs='?',
                         help='The optional desired sort order for channels in the generated m3u')
+arg_parser.add_argument('--tvh_start', '-ts', nargs='?',
+                        help='Optionally specify a start value to initialise the absolute start of numbering for '
+                             'tvh-chnum attribute values')
 arg_parser.add_argument('--tvh_offset', '-t', nargs='?',
-                        help='An optional offset value applied to the Tvheadend tvh-chnum attribute within each channel group')
+                        help='An optional offset value applied to the Tvheadend tvh-chnum attribute within each '
+                             'channel group')
 arg_parser.add_argument('--no_tvg_id', '-nt', action='store_true',
                         help='Optionally allow channels with no tvg-id attribute to be considered as valid channels')
 arg_parser.add_argument('--no_epg', '-ne', action='store_true',
@@ -207,6 +211,11 @@ def validate_args():
         else:
             args.sortchannels = []
 
+        if args.tvh_start:
+            args.tvh_start = int(args.tvh_start) - 1
+        else:
+            args.tvh_start = 0
+
         if args.tvh_offset:
             args.tvh_offset = int(args.tvh_offset)
         else:
@@ -261,8 +270,13 @@ def hydrate_args_from_json(args, json_cfg_file_path):
         if not type(args.sortchannels) is list:
             abort_process('sortchannels is expected to be a json array in {}'.format(json_cfg_file_path), 1, args)
 
+        if "tvh_start" in json_data:
+            args.tvh_start = json_data["tvh_start"]
+        else:
+            args.tvh_offset = 0
+
         if "tvh_offset" in json_data:
-            args.tvh_offset = json_data["tvh_offset"]
+            args.tvh_offset = json_data["tvh_offset"] - 1
         else:
             args.tvh_offset = 0
 
@@ -482,7 +496,7 @@ def sort_m3u_entries(args, m3u_entries):
 # saves the given m3u_entries into the file system
 def save_new_m3u(args, m3u_entries):
     if m3u_entries is not None:
-        idx = 0
+        idx = args.tvh_start
         m3u_target = os.path.join(args.outdirectory, args.outfilename + ".m3u8")
         output_str("saving new m3u file: " + m3u_target)
         with open(m3u_target, "w") as text_file:
@@ -496,7 +510,7 @@ def save_new_m3u(args, m3u_entries):
                 else:
                     logo = entry.tvg_logo
 
-                if args.tvh_offset == 0:
+                if args.tvh_start == 0 and args.tvh_offset == 0:
                     text_file.write('%s tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
                         "#EXTINF:-1", entry.tvg_name, entry.tvg_id, logo, entry.group_title, entry.name))
                 else:
