@@ -368,6 +368,7 @@ def load_m3u(args):
         m3u_entries = parse_m3u(m3u_filename, args.no_tvg_id)
         return m3u_entries
     else:
+        output_str("the HTTP GET request to {} returned status code {}".format(args.m3uurl, m3u_response.status_code))
         m3u_response.close()
 
 
@@ -544,6 +545,7 @@ def load_epg(args):
             epg_filename = extract_original_epg(args.outdirectory, epg_filename)
         return epg_filename
     else:
+        output_str("the HTTP GET request to {} returned status code {}".format(args.epgurl, epg_response.status_code))
         epg_response.close()
 
 
