@@ -273,7 +273,7 @@ def hydrate_args_from_json(args, json_cfg_file_path):
         if "tvh_start" in json_data:
             args.tvh_start = json_data["tvh_start"]
         else:
-            args.tvh_offset = 0
+            args.tvh_start = 0
 
         if "tvh_offset" in json_data:
             args.tvh_offset = json_data["tvh_offset"] - 1
