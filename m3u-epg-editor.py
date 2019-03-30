@@ -437,16 +437,12 @@ def filter_m3u_entries(args, m3u_entries):
             m3u_entries = sorted(m3u_entries, key=lambda entry: entry.tvg_name)
 
         all_channels_name_target = os.path.join(args.outdirectory, "original.channels.txt")
-        filtered_channels_name_target = os.path.join(args.outdirectory, args.outfilename + ".channels.txt")
         with open(all_channels_name_target, "w") as all_channels_file:
-            with open(filtered_channels_name_target, "w") as filtered_channels_file:
-                for m3u_entry in m3u_entries:
-                    channel_ignored = is_channel_ignored(args.channels, m3u_entry.tvg_name)
-                    if m3u_entry.group_title.lower() in args.groups and not channel_ignored:
-                        filtered_m3u_entries.append(m3u_entry)
-                        filtered_channels_file.write(
-                            "'%s','%s'\n" % (m3u_entry.tvg_name.lower(), m3u_entry.group_title.lower()))
-                    all_channels_file.write("'%s','%s'\n" % (m3u_entry.tvg_name.lower(), m3u_entry.group_title.lower()))
+            for m3u_entry in m3u_entries:
+                channel_ignored = is_channel_ignored(args.channels, m3u_entry.tvg_name)
+                if m3u_entry.group_title.lower() in args.groups and not channel_ignored:
+                    filtered_m3u_entries.append(m3u_entry)
+                all_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name.lower(), m3u_entry.group_title.lower()))
 
         output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
     return filtered_m3u_entries
@@ -499,35 +495,40 @@ def save_new_m3u(args, m3u_entries):
     if m3u_entries is not None:
         idx = args.tvh_start
         m3u_target = os.path.join(args.outdirectory, args.outfilename + ".m3u8")
+        filtered_channels_name_target = os.path.join(args.outdirectory, args.outfilename + ".channels.txt")
         output_str("saving new m3u file: " + m3u_target)
+
         with open(m3u_target, "w") as text_file:
             text_file.write("%s\n" % "#EXTM3U")
             group_title = m3u_entries[0].group_title
 
-            for entry in m3u_entries:
+            with open(filtered_channels_name_target, "w") as filtered_channels_file:
+                for entry in m3u_entries:
 
-                if args.http_for_images:
-                    logo = entry.tvg_logo if entry.tvg_logo.startswith("http") else ""
-                else:
-                    logo = entry.tvg_logo
-
-                if args.tvh_start == 0 and args.tvh_offset == 0:
-                    text_file.write('%s tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
-                        "#EXTINF:-1", entry.tvg_name, entry.tvg_id, logo, entry.group_title, entry.name))
-                else:
-                    if entry.group_title == group_title:
-                        idx += 1
+                    if args.http_for_images:
+                        logo = entry.tvg_logo if entry.tvg_logo.startswith("http") else ""
                     else:
-                        group_title = entry.group_title
-                        floor = (idx // args.tvh_offset)
-                        idx = args.tvh_offset * (floor + 1)
-                        idx += 1
-                    text_file.write(
-                        '%s tvh-chnum="%s" tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
-                            "#EXTINF:-1", idx, entry.tvg_name, entry.tvg_id, logo, entry.group_title,
-                            entry.name))
+                        logo = entry.tvg_logo
 
-                text_file.write('%s\n' % entry.url)
+                    if args.tvh_start == 0 and args.tvh_offset == 0:
+                        text_file.write('%s tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
+                            "#EXTINF:-1", entry.tvg_name, entry.tvg_id, logo, entry.group_title, entry.name))
+                    else:
+                        if entry.group_title == group_title:
+                            idx += 1
+                        else:
+                            group_title = entry.group_title
+                            floor = (idx // args.tvh_offset)
+                            idx = args.tvh_offset * (floor + 1)
+                            idx += 1
+                        text_file.write(
+                            '%s tvh-chnum="%s" tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
+                                "#EXTINF:-1", idx, entry.tvg_name, entry.tvg_id, logo, entry.group_title,
+                                entry.name))
+                        filtered_channels_file.write(
+                            "\"%s\",\"%s\"\n" % (entry.tvg_name.lower(), entry.group_title.lower()))
+
+                    text_file.write('%s\n' % entry.url)
 
 
 ########################################################################################################################
@@ -689,7 +690,7 @@ def save_no_epg_channels(args, no_epg_channels):
     no_epg_channels_target = os.path.join(args.outdirectory, "no_epg_channels.txt")
     with open(no_epg_channels_target, "w") as no_epg_channels_file:
         for m3u_entry in no_epg_channels:
-            no_epg_channels_file.write("'%s','%s'\n" % (m3u_entry.tvg_name.lower(), m3u_entry.tvg_id))
+            no_epg_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name.lower(), m3u_entry.tvg_id))
 
 
 # saves the epg xml document represented by xml_tree into the file system
