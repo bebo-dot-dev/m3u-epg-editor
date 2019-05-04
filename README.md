@@ -15,7 +15,7 @@ This script has been tested with the following IPTV providers:
 2. **FabIPTV**
 3. **NecroIPTV**
 
-It is worth noting that VaderStreams do support a unique feature to enable filtering groups within their m3u in the HTTP GET request/response via a `filterCategory` query string parameter. However there are some issues that are common to all IPTV service providers where there is no obvious, easy or free solution:
+VaderStreams ~~do~~ did support a unique feature to enable filtering groups within their m3u in the HTTP GET request/response via a `filterCategory` query string parameter. However there are some issues that are common to all IPTV service providers where there is no obvious, easy or free solution:
 
 1. There is no method to remove specific channels within categories / groups
 2. There is no method to re-order / sort channels within categories / groups to achieve a desired custom sort order
