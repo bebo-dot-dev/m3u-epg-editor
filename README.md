@@ -84,7 +84,7 @@ optional arguments:
   --epgurl [EPGURL], -e [EPGURL]
                         The url to pull the epg file from
   --groups [GROUPS], -g [GROUPS]
-                        Channel groups in the m3u to keep
+                        Channel groups in the m3u to keep. Regex pattern matching is supported
   --channels [CHANNELS], -c [CHANNELS]
                         Channels in the m3u to discard. Regex pattern matching is supported
   --range [RANGE], -r [RANGE]
