@@ -439,13 +439,28 @@ def filter_m3u_entries(args, m3u_entries):
         all_channels_name_target = os.path.join(args.outdirectory, "original.channels.txt")
         with open(all_channels_name_target, "w") as all_channels_file:
             for m3u_entry in m3u_entries:
+                group_included = is_group_included(args.groups, m3u_entry.group_title)
                 channel_ignored = is_channel_ignored(args.channels, m3u_entry.tvg_name)
-                if m3u_entry.group_title.lower() in args.groups and not channel_ignored:
+                if group_included and not channel_ignored:
                     filtered_m3u_entries.append(m3u_entry)
                 all_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name.lower(), m3u_entry.group_title.lower()))
 
         output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
     return filtered_m3u_entries
+
+
+# returns an indicator that describes whether the given group_name is in the given include_groups list
+def is_group_included(include_groups, group_name):
+    included = False
+    if len(include_groups) > 0:
+        # try an exact match
+        included = group_name.lower() in include_groups
+
+        if not included:
+            # try a regex match against all include_groups items
+            included = any(re.search(regex_str, group_name) for regex_str in include_groups)
+
+    return included
 
 
 # returns an indicator that describes whether the given channel_name is in the given ignore_channels list
