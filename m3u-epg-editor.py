@@ -190,7 +190,7 @@ def validate_args():
         abort_process('--groups is mandatory', 1, args)
 
     if not args.json_cfg:
-        set_str = '([' + args.groups.lower() + '])'
+        set_str = '([' + args.groups + '])'
         args.group_idx = list(ast.literal_eval(set_str))
         args.groups = set(ast.literal_eval(set_str))
 
@@ -244,8 +244,20 @@ def hydrate_args_from_json(args, json_cfg_file_path):
     with open(json_cfg_file_path) as json_cfg_file:
         json_data = json.load(json_cfg_file)
 
+        if "no_epg" in json_data:
+            args.no_epg = json_data["no_epg"]
+
+        if not "m3uurl" in json_data:
+            abort_process('m3uurl is mandatory', 1, args)
+
+        if not args.no_epg and not "epgurl" in json_data:
+            abort_process('epgurl is mandatory', 1, args)
+
         args.m3uurl = json_data["m3uurl"]
-        args.epgurl = json_data["epgurl"]
+
+        if not args.no_epg:
+            args.epgurl = json_data["epgurl"]
+
         args.group_idx = json_data["groups"]
         args.groups = set(args.group_idx)
 
@@ -282,8 +294,6 @@ def hydrate_args_from_json(args, json_cfg_file_path):
 
         if "no_tvg_id" in json_data:
             args.no_tvg_id = json_data["no_tvg_id"]
-        if "no_epg" in json_data:
-            args.no_epg = json_data["no_epg"]
         if "no_sort" in json_data:
             args.no_sort = json_data["no_sort"]
         if "http_for_images" in json_data:
@@ -454,7 +464,7 @@ def is_group_included(include_groups, group_name):
     included = False
     if len(include_groups) > 0:
         # try an exact match
-        included = group_name.lower() in include_groups
+        included = group_name in include_groups
 
         if not included:
             # try a regex match against all include_groups items
@@ -483,7 +493,7 @@ def sort_m3u_entries(args, m3u_entries):
     for group_title in args.group_idx:
         idx += 1
         for m3u_item in m3u_entries:
-            if m3u_item.group_title.lower() == group_title:
+            if m3u_item.group_title == group_title:
                 m3u_item.group_idx = idx
 
     if len(args.sortchannels) > 0:
@@ -513,11 +523,12 @@ def save_new_m3u(args, m3u_entries):
         filtered_channels_name_target = os.path.join(args.outdirectory, args.outfilename + ".channels.txt")
         output_str("saving new m3u file: " + m3u_target)
 
-        with open(m3u_target, "w") as text_file:
-            text_file.write("%s\n" % "#EXTM3U")
-            group_title = m3u_entries[0].group_title
-
+        with open(m3u_target, "w") as m3u_target_file:
             with open(filtered_channels_name_target, "w") as filtered_channels_file:
+
+                m3u_target_file.write("%s\n" % "#EXTM3U")
+                group_title = m3u_entries[0].group_title
+
                 for entry in m3u_entries:
 
                     if args.http_for_images:
@@ -526,7 +537,7 @@ def save_new_m3u(args, m3u_entries):
                         logo = entry.tvg_logo
 
                     if args.tvh_start == 0 and args.tvh_offset == 0:
-                        text_file.write('%s tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
+                        m3u_target_file.write('%s tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
                             "#EXTINF:-1", entry.tvg_name, entry.tvg_id, logo, entry.group_title, entry.name))
                     else:
                         if entry.group_title == group_title:
@@ -536,14 +547,14 @@ def save_new_m3u(args, m3u_entries):
                             floor = (idx // args.tvh_offset)
                             idx = args.tvh_offset * (floor + 1)
                             idx += 1
-                        text_file.write(
+                        m3u_target_file.write(
                             '%s tvh-chnum="%s" tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
                                 "#EXTINF:-1", idx, entry.tvg_name, entry.tvg_id, logo, entry.group_title,
                                 entry.name))
-                        filtered_channels_file.write(
-                            "\"%s\",\"%s\"\n" % (entry.tvg_name.lower(), entry.group_title.lower()))
 
-                    text_file.write('%s\n' % entry.url)
+                    m3u_target_file.write('%s\n' % entry.url)
+                    filtered_channels_file.write(
+                        "\"%s\",\"%s\"\n" % (entry.tvg_name.lower(), entry.group_title.lower()))
 
 
 ########################################################################################################################
