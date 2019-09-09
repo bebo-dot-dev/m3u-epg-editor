@@ -453,7 +453,7 @@ def filter_m3u_entries(args, m3u_entries):
                 channel_ignored = is_channel_ignored(args.channels, m3u_entry.tvg_name)
                 if group_included and not channel_ignored:
                     filtered_m3u_entries.append(m3u_entry)
-                all_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name.lower(), m3u_entry.group_title.lower()))
+                all_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name, m3u_entry.group_title))
 
         output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
     return filtered_m3u_entries
@@ -478,7 +478,7 @@ def is_channel_ignored(ignore_channels, channel_name):
     ignored = False
     if len(ignore_channels) > 0:
         # try an exact match
-        ignored = channel_name.lower() in ignore_channels
+        ignored = channel_name in ignore_channels
 
         if not ignored:
             # try a regex match against all ignore_channels items
@@ -499,7 +499,7 @@ def sort_m3u_entries(args, m3u_entries):
     if len(args.sortchannels) > 0:
         idx = 0
         for sort_channel in args.sortchannels:
-            m3u_item = next((x for x in m3u_entries if x.tvg_name.lower() == sort_channel), None)
+            m3u_item = next((x for x in m3u_entries if x.tvg_name == sort_channel), None)
             if m3u_item is not None:
                 m3u_item.channel_idx = idx
             idx += 1
@@ -554,7 +554,7 @@ def save_new_m3u(args, m3u_entries):
 
                     m3u_target_file.write('%s\n' % entry.url)
                     filtered_channels_file.write(
-                        "\"%s\",\"%s\"\n" % (entry.tvg_name.lower(), entry.group_title.lower()))
+                        "\"%s\",\"%s\"\n" % (entry.tvg_name, entry.group_title))
 
 
 ########################################################################################################################
@@ -716,7 +716,7 @@ def save_no_epg_channels(args, no_epg_channels):
     no_epg_channels_target = os.path.join(args.outdirectory, "no_epg_channels.txt")
     with open(no_epg_channels_target, "w") as no_epg_channels_file:
         for m3u_entry in no_epg_channels:
-            no_epg_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name.lower(), m3u_entry.tvg_id))
+            no_epg_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name, m3u_entry.tvg_id))
 
 
 # saves the epg xml document represented by xml_tree into the file system
