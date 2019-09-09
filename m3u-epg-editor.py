@@ -120,7 +120,13 @@ arg_parser.add_argument('--json_cfg', '-j', nargs='?',
                         help='A json input configuration file containing argument values')
 arg_parser.add_argument('--m3uurl', '-m', nargs='?', help='The url to pull the m3u file from')
 arg_parser.add_argument('--epgurl', '-e', nargs='?', help='The url to pull the epg file from')
-arg_parser.add_argument('--groups', '-g', nargs='?', help='Channel groups in the m3u to keep')
+arg_parser.add_argument('--groups', '-g', nargs='?', help='Channel groups in the m3u to keep or discard. The default '
+                                                          'mode is to keep the specified groups, switch to discard '
+                                                          'mode with the -gm / --groupmode argument')
+arg_parser.add_argument('--groupmode', '-gm', nargs='?', default='keep',
+                        help='Specify "keep" or "discard" to control how the -g / --group argument should work. When '
+                             'not specified, the -g / --group argument behaviour will default to keeping the '
+                             'specified groups')
 arg_parser.add_argument('--channels', '-c', nargs='?',
                         help='Channels in the m3u to discard. Regex pattern matching is supported')
 arg_parser.add_argument('--range', '-r', nargs='?',
@@ -260,6 +266,9 @@ def hydrate_args_from_json(args, json_cfg_file_path):
 
         args.group_idx = json_data["groups"]
         args.groups = set(args.group_idx)
+
+        if "groupmode" in json_data:
+            args.groupmode = (json_data["groupmode"]).encode('utf-8')
 
         if "channels" in json_data:
             args.channels = json_data["channels"]
@@ -449,7 +458,15 @@ def filter_m3u_entries(args, m3u_entries):
         all_channels_name_target = os.path.join(args.outdirectory, "original.channels.txt")
         with open(all_channels_name_target, "w") as all_channels_file:
             for m3u_entry in m3u_entries:
-                group_included = is_group_included(args.groups, m3u_entry.group_title)
+                group_matched = is_group_matched(args.groups, m3u_entry.group_title)
+                
+                # check whether the given group is wanted based on the groupmode argument value (defaults to "keep")
+                group_included = False
+                if args.groupmode == "keep":
+                    group_included = group_matched
+                elif args.groupmode == "discard":
+                    group_included = not group_matched
+
                 channel_ignored = is_channel_ignored(args.channels, m3u_entry.tvg_name)
                 if group_included and not channel_ignored:
                     filtered_m3u_entries.append(m3u_entry)
@@ -459,18 +476,18 @@ def filter_m3u_entries(args, m3u_entries):
     return filtered_m3u_entries
 
 
-# returns an indicator that describes whether the given group_name is in the given include_groups list
-def is_group_included(include_groups, group_name):
-    included = False
-    if len(include_groups) > 0:
+# returns an indicator that describes whether the given group_name is matched in the given groups list
+def is_group_matched(groups, group_name):
+    matched = False
+    if len(groups) > 0:
         # try an exact match
-        included = group_name in include_groups
+        matched = group_name in groups
 
-        if not included:
-            # try a regex match against all include_groups items
-            included = any(re.search(regex_str, group_name) for regex_str in include_groups)
+        if not matched:
+            # try a regex match against all groups
+            matched = any(re.search(regex_str, group_name) for regex_str in groups)
 
-    return included
+    return matched
 
 
 # returns an indicator that describes whether the given channel_name is in the given ignore_channels list

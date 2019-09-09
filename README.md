@@ -66,11 +66,11 @@ The requests module can be installed with pip i.e. `pip install requests`
 $ python ./m3u-epg-editor.py --help
 usage: m3u-epg-editor.py [-h] [--json_cfg [JSON_CFG]] [--m3uurl [M3UURL]]
                          [--epgurl [EPGURL]] [--groups [GROUPS]]
-                         [--channels [CHANNELS]] [--range [RANGE]]
-                         [--sortchannels [SORTCHANNELS]]
-                         [--tvh_offset [TVH_OFFSET]] [--no_tvg_id] [--no_epg]
-                         [--no_sort] [--http_for_images]
-                         [--outdirectory [OUTDIRECTORY]]
+                         [--groupmode [GROUPMODE]] [--channels [CHANNELS]]
+                         [--range [RANGE]] [--sortchannels [SORTCHANNELS]]
+                         [--tvh_start [TVH_START]] [--tvh_offset [TVH_OFFSET]]
+                         [--no_tvg_id] [--no_epg] [--no_sort]
+                         [--http_for_images] [--outdirectory [OUTDIRECTORY]]
                          [--outfilename [OUTFILENAME]] [--log_enabled]
 
 download and optimize m3u/epg files retrieved from a remote web server
@@ -84,13 +84,17 @@ optional arguments:
   --epgurl [EPGURL], -e [EPGURL]
                         The url to pull the epg file from
   --groups [GROUPS], -g [GROUPS]
-                        Channel groups in the m3u to keep. Regex pattern matching is supported
+                        Channel groups in the m3u to keep or discard. The default mode is to keep the specified groups, switch to discard mode with the -gm / --groupmode argument
+  --groupmode [GROUPMODE], -gm [GROUPMODE]
+                        Specify "keep" or "discard" to control how the -g / --group argument should work. When not specified, the -g / --group argument behaviour will default to keeping the specified groups
   --channels [CHANNELS], -c [CHANNELS]
                         Channels in the m3u to discard. Regex pattern matching is supported
   --range [RANGE], -r [RANGE]
                         An optional range window to consider when adding programmes to the epg
   --sortchannels [SORTCHANNELS], -s [SORTCHANNELS]
                         The optional desired sort order for channels in the generated m3u
+  --tvh_start [TVH_START], -ts [TVH_START]
+                        Optionally specify a start value to initialise the absolute start of numbering for tvh-chnum attribute values
   --tvh_offset [TVH_OFFSET], -t [TVH_OFFSET]
                         An optional offset value applied to the Tvheadend tvh-chnum attribute within each channel group
   --no_tvg_id, -nt      Optionally allow channels with no tvg-id attribute to be considered as valid channels
