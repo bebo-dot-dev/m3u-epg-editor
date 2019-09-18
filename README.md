@@ -66,7 +66,9 @@ The requests module can be installed with pip i.e. `pip install requests`
 $ python ./m3u-epg-editor.py --help
 usage: m3u-epg-editor.py [-h] [--json_cfg [JSON_CFG]] [--m3uurl [M3UURL]]
                          [--epgurl [EPGURL]] [--groups [GROUPS]]
-                         [--groupmode [GROUPMODE]] [--channels [CHANNELS]]
+                         [--groupmode [GROUPMODE]]
+                         [--discard_channels [DISCARD_CHANNELS]]
+                         [--include_channels [INCLUDE_CHANNELS]]
                          [--range [RANGE]] [--sortchannels [SORTCHANNELS]]
                          [--tvh_start [TVH_START]] [--tvh_offset [TVH_OFFSET]]
                          [--no_tvg_id] [--no_epg] [--no_sort]
@@ -87,8 +89,10 @@ optional arguments:
                         Channel groups in the m3u to keep or discard. The default mode is to keep the specified groups, switch to discard mode with the -gm / --groupmode argument
   --groupmode [GROUPMODE], -gm [GROUPMODE]
                         Specify "keep" or "discard" to control how the -g / --group argument should work. When not specified, the -g / --group argument behaviour will default to keeping the specified groups
-  --channels [CHANNELS], -c [CHANNELS]
+  --discard_channels [DISCARD_CHANNELS], -dc [DISCARD_CHANNELS]
                         Channels in the m3u to discard. Regex pattern matching is supported
+  --include_channels [INCLUDE_CHANNELS], -ic [INCLUDE_CHANNELS]
+                        Channels in the m3u to keep. Regex pattern matching is supported. Channel matched in this argument will always kept, effectively overriding of any other group or channel exclusion configuration.
   --range [RANGE], -r [RANGE]
                         An optional range window to consider when adding programmes to the epg
   --sortchannels [SORTCHANNELS], -s [SORTCHANNELS]

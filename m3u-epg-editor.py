@@ -127,8 +127,12 @@ arg_parser.add_argument('--groupmode', '-gm', nargs='?', default='keep',
                         help='Specify "keep" or "discard" to control how the -g / --group argument should work. When '
                              'not specified, the -g / --group argument behaviour will default to keeping the '
                              'specified groups')
-arg_parser.add_argument('--channels', '-c', nargs='?',
+arg_parser.add_argument('--discard_channels', '-dc', nargs='?',
                         help='Channels in the m3u to discard. Regex pattern matching is supported')
+arg_parser.add_argument('--include_channels', '-ic', nargs='?',
+                        help='Channels in the m3u to keep. Regex pattern matching is supported. Channel matched in '
+                             'this argument will always kept, effectively overriding of any other group or channel '
+                             'exclusion configuration.')
 arg_parser.add_argument('--range', '-r', nargs='?',
                         help='An optional range window to consider when adding programmes to the epg')
 arg_parser.add_argument('--sortchannels', '-s', nargs='?',
@@ -200,11 +204,17 @@ def validate_args():
         args.group_idx = list(ast.literal_eval(set_str))
         args.groups = set(ast.literal_eval(set_str))
 
-        if args.channels:
-            set_str = '([' + args.channels + '])'
-            args.channels = list(ast.literal_eval(set_str))
+        if args.discard_channels:
+            set_str = '([' + args.discard_channels + '])'
+            args.discard_channels = list(ast.literal_eval(set_str))
         else:
-            args.channels = list()
+            args.discard_channels = list()
+
+        if args.include_channels:
+            set_str = '([' + args.include_channels + '])'
+            args.include_channels = list(ast.literal_eval(set_str))
+        else:
+            args.include_channels = list()
 
         if args.range:
             args.range = int(args.range)
@@ -270,13 +280,21 @@ def hydrate_args_from_json(args, json_cfg_file_path):
         if "groupmode" in json_data:
             args.groupmode = (json_data["groupmode"]).encode('utf-8')
 
-        if "channels" in json_data:
-            args.channels = json_data["channels"]
+        if "discard_channels" in json_data:
+            args.discard_channels = json_data["discard_channels"]
         else:
-            args.channels = list()
+            args.discard_channels = list()
 
-        if not type(args.channels) is list:
-            abort_process('channels is expected to be a json array in {}'.format(json_cfg_file_path), 1, args)
+        if not type(args.discard_channels) is list:
+            abort_process('discard_channels is expected to be a json array in {}'.format(json_cfg_file_path), 1, args)
+
+        if "include_channels" in json_data:
+            args.include_channels = json_data["include_channels"]
+        else:
+            args.include_channels = list()
+
+        if not type(args.include_channels) is list:
+            abort_process('include_channels is expected to be a json array in {}'.format(json_cfg_file_path), 1, args)
 
         if "range" in json_data:
             args.range = json_data["range"]
@@ -383,7 +401,8 @@ def load_m3u(args):
     m3u_response = get_m3u(args.m3uurl)
     if m3u_response.status_code == 200:
         m3u_filename = save_original_m3u(args.outdirectory, m3u_response)
-        m3u_response.close()
+        if args.m3uurl.lower().startswith('http'):
+            m3u_response.close()
         m3u_entries = parse_m3u(m3u_filename, args.no_tvg_id)
         return m3u_entries
     else:
@@ -448,8 +467,10 @@ def filter_m3u_entries(args, m3u_entries):
     filtered_m3u_entries = []
     if m3u_entries is not None and len(m3u_entries) > 0:
         output_str("keeping channel groups in this list {}".format(str(args.group_idx)))
-        if len(args.channels) > 0:
-            output_str("ignoring channels in this list {}".format(str(args.channels)))
+        if len(args.discard_channels) > 0:
+            output_str("ignoring channels in this list {}".format(str(args.discard_channels)))
+        if len(args.include_channels) > 0:
+            output_str("hard keeping channels in this list {}".format(str(args.include_channels)))
 
         if not args.no_sort:
             # sort the channels by name by default
@@ -458,8 +479,8 @@ def filter_m3u_entries(args, m3u_entries):
         all_channels_name_target = os.path.join(args.outdirectory, "original.channels.txt")
         with open(all_channels_name_target, "w") as all_channels_file:
             for m3u_entry in m3u_entries:
-                group_matched = is_group_matched(args.groups, m3u_entry.group_title)
-                
+                group_matched = is_item_matched(args.groups, m3u_entry.group_title)
+
                 # check whether the given group is wanted based on the groupmode argument value (defaults to "keep")
                 group_included = False
                 if args.groupmode == "keep":
@@ -467,41 +488,30 @@ def filter_m3u_entries(args, m3u_entries):
                 elif args.groupmode == "discard":
                     group_included = not group_matched
 
-                channel_ignored = is_channel_ignored(args.channels, m3u_entry.tvg_name)
-                if group_included and not channel_ignored:
+                channel_discarded = is_item_matched(args.discard_channels, m3u_entry.tvg_name)
+                channel_always_kept = is_item_matched(args.include_channels, m3u_entry.tvg_name)
+
+                if group_included and (not channel_discarded or channel_always_kept):
                     filtered_m3u_entries.append(m3u_entry)
+
                 all_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name, m3u_entry.group_title))
 
         output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
     return filtered_m3u_entries
 
 
-# returns an indicator that describes whether the given group_name is matched in the given groups list
-def is_group_matched(groups, group_name):
+# returns an indicator that describes whether the given item_name is matched in the given item_list
+def is_item_matched(item_list, item_name):
     matched = False
-    if len(groups) > 0:
+    if len(item_list) > 0:
         # try an exact match
-        matched = group_name in groups
+        matched = item_name in item_list
 
         if not matched:
             # try a regex match against all groups
-            matched = any(re.search(regex_str, group_name) for regex_str in groups)
+            matched = any(re.search(regex_str, item_name) for regex_str in item_list)
 
     return matched
-
-
-# returns an indicator that describes whether the given channel_name is in the given ignore_channels list
-def is_channel_ignored(ignore_channels, channel_name):
-    ignored = False
-    if len(ignore_channels) > 0:
-        # try an exact match
-        ignored = channel_name in ignore_channels
-
-        if not ignored:
-            # try a regex match against all ignore_channels items
-            ignored = any(re.search(regex_str, channel_name) for regex_str in ignore_channels)
-
-    return ignored
 
 
 # sorts the given m3u_entries using the supplied args.groups and args.sortchannels

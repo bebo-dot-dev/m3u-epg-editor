@@ -1,13 +1,10 @@
 {
-    "m3uurl": "http://<VADERSTREAMS_DOMAIN>/epg/vget?username=<USERNAME>&password=<PASSWORD>",
-    "epgurl": "http:/<VADERSTREAMS_DOMAIN>/p2.xml.gz",
+    "m3uurl": "http://<SERVICE_DOMAIN>?username=<USERNAME>&password=<PASSWORD>",
+    "epgurl": "http:/<SERVICE_DOMAIN>/xmltv_epg.gz",
     "groups": [
         "sports"
     ],
-    "channels": [
-        "willow hd",
-        "bein sports espanol hd"
-    ],
+    "discard_channels": ["(\\w*|\\d*) SD"],
     "range": 12,
     "sortchannels": [
         "sky sports action 4k",
@@ -43,5 +40,6 @@
     "no_epg": false,
     "no_sort": false,
     "outdirectory": "/home/target_directory",
-    "outfilename": "output_file"
+    "outfilename": "output_file",
+    "log_enabled": true
 }
