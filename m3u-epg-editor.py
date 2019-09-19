@@ -491,7 +491,7 @@ def filter_m3u_entries(args, m3u_entries):
                 channel_discarded = is_item_matched(args.discard_channels, m3u_entry.tvg_name)
                 channel_always_kept = is_item_matched(args.include_channels, m3u_entry.tvg_name)
 
-                if group_included and (not channel_discarded or channel_always_kept):
+                if (group_included and not channel_discarded) or channel_always_kept:
                     filtered_m3u_entries.append(m3u_entry)
 
                 all_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name, m3u_entry.group_title))
