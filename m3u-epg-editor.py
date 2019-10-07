@@ -565,7 +565,7 @@ def save_new_m3u(args, m3u_entries):
 
                     if args.tvh_start == 0 and args.tvh_offset == 0:
                         m3u_target_file.write('%s tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
-                            "#EXTINF:-1", entry.tvg_name, entry.tvg_id, logo, entry.group_title, entry.name))
+                            "#EXTINF:-1", entry.tvg_name, entry.tvg_id.lower(), logo, entry.group_title, entry.name))
                     else:
                         if entry.group_title == group_title:
                             idx += 1
@@ -576,7 +576,7 @@ def save_new_m3u(args, m3u_entries):
                             idx += 1
                         m3u_target_file.write(
                             '%s tvh-chnum="%s" tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
-                                "#EXTINF:-1", idx, entry.tvg_name, entry.tvg_id, logo, entry.group_title,
+                                "#EXTINF:-1", idx, entry.tvg_name, entry.tvg_id.lower(), logo, entry.group_title,
                                 entry.name))
 
                     m3u_target_file.write('%s\n' % entry.url)
@@ -594,7 +594,8 @@ def load_epg(args):
         is_gzipped = args.epgurl.lower().endswith(".gz")
         is_http_response = args.epgurl.lower().startswith("http")
         epg_filename = save_original_epg(is_gzipped, is_http_response, args.outdirectory, epg_response)
-        epg_response.close()
+        if is_http_response:
+            epg_response.close()
         if is_gzipped:
             epg_filename = extract_original_epg(args.outdirectory, epg_filename)
         return epg_filename
@@ -685,12 +686,14 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
         new_root.set("generator-info-url", "py-m3u-epg-editor")
 
         # create a channel element for every channel present in the m3u
+        epg_channel_count=0
         for channel in original_root.iter('channel'):
             channel_id = channel.get("id")
-            if any(x.tvg_id == channel_id for x in m3u_entries):
+            if channel_id is not None and any(x.tvg_id.lower() == channel_id.lower() for x in m3u_entries):
                 output_str("creating channel element for {}".format(channel_id))
+                epg_channel_count+=1
                 new_channel = SubElement(new_root, "channel")
-                new_channel.set("id", channel_id)
+                new_channel.set("id", channel_id.lower())
                 for elem in channel:
                     new_elem = SubElement(new_channel, elem.tag)
                     new_elem.text = elem.text
@@ -700,12 +703,25 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                             attr_val = attr_val if attr_val.startswith("http") else ""
                         new_elem.set(attr_key, attr_val)
 
+        if epg_channel_count > 0:
+            all_epg_programmes_xpath = 'programme'
+            all_epg_programmes = original_tree.findall(all_epg_programmes_xpath)
+            if len(all_epg_programmes) > 0:
+                # force the channel (tvg-id) attribute value to lowercase to enable a case-insensitive
+                # xpath lookup with: channel_xpath = 'programme[@channel="' + entry.tvg_id.lower() + '"]'
+                for programme in all_epg_programmes:
+                    for attr_key in programme.keys():
+                        attr_val = programme.get(attr_key)
+                        if attr_key.lower() == 'channel' and attr_val is not None:
+                            programme.set(attr_key, attr_val.lower())
+
         # now copy all programme elements from the original epg for every channel present in the m3u
         no_epg_channels = []
         for entry in m3u_entries:
             if entry.tvg_id is not None and entry.tvg_id != "" and entry.tvg_id != "None":
                 output_str("creating programme elements for {}".format(entry.tvg_name))
-                channel_xpath = 'programme[@channel="' + entry.tvg_id + '"]'
+                # case-insensitive xpath search
+                channel_xpath = 'programme[@channel="' + entry.tvg_id.lower() + '"]'
                 channel_programmes = original_tree.findall(channel_xpath)
                 if len(channel_programmes) > 0:
                     for elem in channel_programmes:
