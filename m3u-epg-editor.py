@@ -137,6 +137,10 @@ arg_parser.add_argument('--range', '-r', nargs='?',
                         help='An optional range window to consider when adding programmes to the epg')
 arg_parser.add_argument('--sortchannels', '-s', nargs='?',
                         help='The optional desired sort order for channels in the generated m3u')
+arg_parser.add_argument('--xml_sort_type', '-xs', nargs='?', default='none',
+                        help='Specify "alpha" or "m3u" to control how channel elements within the resulting EPG xml '
+                             'will be sorted. When not specified channel element sort order will follow the original '
+                             'source xml sort order')
 arg_parser.add_argument('--tvh_start', '-ts', nargs='?',
                         help='Optionally specify a start value to initialise the absolute start of numbering for '
                              'tvh-chnum attribute values')
@@ -308,6 +312,9 @@ def hydrate_args_from_json(args, json_cfg_file_path):
 
         if not type(args.sortchannels) is list:
             abort_process('sortchannels is expected to be a json array in {}'.format(json_cfg_file_path), 1, args)
+
+        if "xml_sort_type" in json_data:
+            args.xml_sort_type = (json_data["xml_sort_type"]).encode('utf-8')
 
         if "tvh_start" in json_data:
             args.tvh_start = json_data["tvh_start"]
@@ -686,12 +693,12 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
         new_root.set("generator-info-url", "py-m3u-epg-editor")
 
         # create a channel element for every channel present in the m3u
-        epg_channel_count=0
+        epg_channel_count = 0
         for channel in original_root.iter('channel'):
             channel_id = channel.get("id")
             if channel_id is not None and any(x.tvg_id.lower() == channel_id.lower() for x in m3u_entries):
                 output_str("creating channel element for {}".format(channel_id))
-                epg_channel_count+=1
+                epg_channel_count += 1
                 new_channel = SubElement(new_root, "channel")
                 new_channel.set("id", channel_id.lower())
                 for elem in channel:
@@ -704,6 +711,18 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                         new_elem.set(attr_key, attr_val)
 
         if epg_channel_count > 0:
+
+            # perform any specified channel element sorting
+            if args.xml_sort_type == 'alpha':
+                channels = new_root.findall("channel[@id]")
+                alpha_sorted_channels = sorted(channels, key=lambda ch_elem: (ch_elem.tag, ch_elem.get('id')))
+                new_root[:] = alpha_sorted_channels
+            elif args.xml_sort_type == 'm3u':
+                channels = new_root.findall("channel[@id]")
+                m3u_sorted_channels = sorted(channels, key=lambda
+                    ch_elem: (ch_elem.tag, [x.tvg_id.lower() for x in m3u_entries].index(ch_elem.get('id').lower())))
+                new_root[:] = m3u_sorted_channels
+
             all_epg_programmes_xpath = 'programme'
             all_epg_programmes = original_tree.findall(all_epg_programmes_xpath)
             if len(all_epg_programmes) > 0:
