@@ -70,6 +70,7 @@ usage: m3u-epg-editor.py [-h] [--json_cfg [JSON_CFG]] [--m3uurl [M3UURL]]
                          [--discard_channels [DISCARD_CHANNELS]]
                          [--include_channels [INCLUDE_CHANNELS]]
                          [--range [RANGE]] [--sortchannels [SORTCHANNELS]]
+                         [--xml_sort_type [XML_SORT_TYPE]]
                          [--tvh_start [TVH_START]] [--tvh_offset [TVH_OFFSET]]
                          [--no_tvg_id] [--no_epg] [--no_sort]
                          [--http_for_images] [--outdirectory [OUTDIRECTORY]]
@@ -97,6 +98,8 @@ optional arguments:
                         An optional range window to consider when adding programmes to the epg
   --sortchannels [SORTCHANNELS], -s [SORTCHANNELS]
                         The optional desired sort order for channels in the generated m3u
+  --xml_sort_type [XML_SORT_TYPE], -xs [XML_SORT_TYPE]
+                        Specify "alpha" or "m3u" to control how channel elements within the resulting EPG xml will be sorted. When not specified channel element sort order will follow the original source xml sort order
   --tvh_start [TVH_START], -ts [TVH_START]
                         Optionally specify a start value to initialise the absolute start of numbering for tvh-chnum attribute values
   --tvh_offset [TVH_OFFSET], -t [TVH_OFFSET]
