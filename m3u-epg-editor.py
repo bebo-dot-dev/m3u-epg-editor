@@ -696,7 +696,7 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
         epg_channel_count = 0
         for channel in original_root.iter('channel'):
             channel_id = channel.get("id")
-            if channel_id is not None and any(x.tvg_id.lower() == channel_id.lower() for x in m3u_entries):
+            if channel_id is not None and channel_id != "" and any(x.tvg_id.lower() == channel_id.lower() for x in m3u_entries):
                 output_str("creating channel element for {}".format(channel_id))
                 epg_channel_count += 1
                 new_channel = SubElement(new_root, "channel")
