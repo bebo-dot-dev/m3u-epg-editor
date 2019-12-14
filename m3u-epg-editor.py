@@ -42,6 +42,10 @@ class M3uItem:
         self.tvg_id = None
         self.tvg_logo = None
         self.group_title = None
+        self.timeshift = None
+        self.catchup_days = None
+        self.catchup = None
+        self.catchup_source = None
         self.name = None
         self.url = None
         self.group_idx = 0
@@ -49,13 +53,36 @@ class M3uItem:
 
         if m3u_fields is not None:
             try:
-                self.tvg_name = re.search('tvg-name="(.*?)"', m3u_fields, re.IGNORECASE).group(1)
-                self.tvg_id = re.search('tvg-id="(.*?)"', m3u_fields, re.IGNORECASE).group(1)
-                self.tvg_logo = re.search('tvg-logo="(.*?)"', m3u_fields, re.IGNORECASE).group(1)
-                self.group_title = re.search('group-title="(.*?)"', m3u_fields, re.IGNORECASE).group(1)
-                self.name = m3u_fields.split("\",")[1]
+                match = re.search('tvg-name="(.*?)"', m3u_fields, re.IGNORECASE)
+                if match:
+                    self.tvg_name = match.group(1)
+                match = re.search('tvg-id="(.*?)"', m3u_fields, re.IGNORECASE)
+                if match:
+                    self.tvg_id = match.group(1)
+                match = re.search('tvg-logo="(.*?)"', m3u_fields, re.IGNORECASE)
+                if match:
+                    self.tvg_logo = match.group(1)
+                match = re.search('group-title="(.*?)"', m3u_fields, re.IGNORECASE)
+                if match:
+                    self.group_title = match.group(1)
+                match = re.search('timeshift="(.*?)"', m3u_fields, re.IGNORECASE)
+                if match:
+                    self.timeshift = match.group(1)
+                match = re.search('catchup-days="(.*?)"', m3u_fields, re.IGNORECASE)
+                if match:
+                    self.catchup_days = match.group(1)
+                match = re.search('catchup="(.*?)"', m3u_fields, re.IGNORECASE)
+                if match:
+                    self.catchup = match.group(1)
+                match = re.search('catchup-source="(.*?)"', m3u_fields, re.IGNORECASE)
+                if match:
+                    self.catchup_source = match.group(1)
+                self.name = re.search('" ?,(.*)$', m3u_fields, re.IGNORECASE).group(1)
             except AttributeError as e:
                 output_str("m3u file parse AttributeError: {0}".format(e))
+
+        if self.tvg_name is None or self.tvg_name == "":
+            self.tvg_name = self.name
 
     def is_valid(self, allow_no_tvg_id):
         isvalid = self.tvg_name is not None and self.tvg_name != "" and \
@@ -456,7 +483,7 @@ def parse_m3u(m3u_filename, allow_no_tvg_id):
     for line in m3u_file:
         line = line.strip()
         if line.startswith('#EXTINF:'):
-            m3u_fields = line.split('#EXTINF:-1 ')[1]
+            m3u_fields = line.split('#EXTINF:0 ')[1] if line.startswith('#EXTINF:0') else line.split('#EXTINF:-1 ')[1]
             entry = M3uItem(m3u_fields)
         elif len(line) != 0:
             entry.url = line
@@ -516,7 +543,7 @@ def is_item_matched(item_list, item_name):
 
         if not matched:
             # try a regex match against all groups
-            matched = any(re.search(regex_str, item_name) for regex_str in item_list)
+            matched = any(re.search(regex_str, item_name, re.IGNORECASE) for regex_str in item_list)
 
     return matched
 
@@ -533,7 +560,7 @@ def sort_m3u_entries(args, m3u_entries):
     if len(args.sortchannels) > 0:
         idx = 0
         for sort_channel in args.sortchannels:
-            m3u_item = next((x for x in m3u_entries if x.tvg_name == sort_channel), None)
+            m3u_item = next((x for x in m3u_entries if x.tvg_name.lower() == sort_channel.lower()), None)
             if m3u_item is not None:
                 m3u_item.channel_idx = idx
             idx += 1
@@ -565,15 +592,14 @@ def save_new_m3u(args, m3u_entries):
 
                 for entry in m3u_entries:
 
+                    meta = "#EXTINF:-1"
+
                     if args.http_for_images:
                         logo = entry.tvg_logo if entry.tvg_logo.startswith("http") else ""
                     else:
                         logo = entry.tvg_logo
 
-                    if args.tvh_start == 0 and args.tvh_offset == 0:
-                        m3u_target_file.write('%s tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
-                            "#EXTINF:-1", entry.tvg_name, entry.tvg_id.lower(), logo, entry.group_title, entry.name))
-                    else:
+                    if args.tvh_start > 0 or args.tvh_offset > 0:
                         if entry.group_title == group_title:
                             idx += 1
                         else:
@@ -581,11 +607,35 @@ def save_new_m3u(args, m3u_entries):
                             floor = (idx // args.tvh_offset)
                             idx = args.tvh_offset * (floor + 1)
                             idx += 1
-                        m3u_target_file.write(
-                            '%s tvh-chnum="%s" tvg-name="%s" tvg-id="%s" tvg-logo="%s" group-title="%s",%s\n' % (
-                                "#EXTINF:-1", idx, entry.tvg_name, entry.tvg_id.lower(), logo, entry.group_title,
-                                entry.name))
 
+                        meta += ' tvh-chnum="%s"' % idx
+
+                    meta += ' tvg-name="%s"' % entry.tvg_name
+
+                    if entry.tvg_id is not None and entry.tvg_id != "":
+                        meta += ' tvg-id="%s"' % entry.tvg_id.lower()
+
+                    if logo is not None and logo != "":
+                        meta += ' tvg-logo="%s"' % logo
+
+                    if entry.group_title is not None and entry.group_title != "":
+                        meta += ' group-title="%s"' % entry.group_title
+
+                    if entry.timeshift is not None and entry.timeshift != "":
+                        meta += ' timeshift="%s"' % entry.timeshift
+
+                    if entry.catchup_days is not None and entry.catchup_days != "":
+                        meta += ' catchup-days="%s"' % entry.catchup_days
+
+                    if entry.catchup is not None and entry.catchup != "":
+                        meta += ' catchup="%s"' % entry.catchup
+
+                    if entry.catchup_source is not None and entry.catchup_source != "":
+                        meta += ' catchup-source="%s"' % entry.catchup_source
+
+                    meta += ",%s\n" % entry.name
+
+                    m3u_target_file.write(meta)
                     m3u_target_file.write('%s\n' % entry.url)
                     filtered_channels_file.write(
                         "\"%s\",\"%s\"\n" % (entry.tvg_name, entry.group_title))
