@@ -183,6 +183,10 @@ arg_parser.add_argument('--no_sort', '-ns', action='store_true',
 arg_parser.add_argument('--http_for_images', '-hi', action='store_true',
                         help='Optionally prevent image attributes being populated where the source contains anything '
                              'other than a http url i.e. data:image uri content')
+arg_parser.add_argument('--preserve_case', '-pc', action='store_true',
+                        help='Optionally preserve the original case sensitivity of tvg-id and channel attributes as '
+                             'supplied in the original M3U and EPG file data through to the target newly generated '
+                             'M3U and EPG files')
 arg_parser.add_argument('--outdirectory', '-d', nargs='?',
                         help='The output folder where retrieved and generated file are to be stored')
 arg_parser.add_argument('--outfilename', '-f', nargs='?', help='The output filename for the generated files')
@@ -359,6 +363,8 @@ def hydrate_args_from_json(args, json_cfg_file_path):
             args.no_sort = json_data["no_sort"]
         if "http_for_images" in json_data:
             args.http_for_images = json_data["http_for_images"]
+        if "preserve_case" in json_data:
+            args.preserve_case = json_data["preserve_case"]
 
         if "outdirectory" in json_data:
             args.outdirectory = json_data["outdirectory"]
@@ -613,7 +619,8 @@ def save_new_m3u(args, m3u_entries):
                     meta += ' tvg-name="%s"' % entry.tvg_name
 
                     if entry.tvg_id is not None and entry.tvg_id != "":
-                        meta += ' tvg-id="%s"' % entry.tvg_id.lower()
+                        channelId = entry.tvg_id.lower() if not args.preserve_case else entry.tvg_id
+                        meta += ' tvg-id="%s"' % channelId
 
                     if logo is not None and logo != "":
                         meta += ' tvg-logo="%s"' % logo
@@ -750,7 +757,7 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                 output_str("creating channel element for {}".format(channel_id))
                 epg_channel_count += 1
                 new_channel = SubElement(new_root, "channel")
-                new_channel.set("id", channel_id.lower())
+                new_channel.set("id", channel_id.lower() if not args.preserve_case else channel_id)
                 for elem in channel:
                     new_elem = SubElement(new_channel, elem.tag)
                     new_elem.text = elem.text
@@ -775,7 +782,7 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
 
             all_epg_programmes_xpath = 'programme'
             all_epg_programmes = original_tree.findall(all_epg_programmes_xpath)
-            if len(all_epg_programmes) > 0:
+            if len(all_epg_programmes) > 0 and not args.preserve_case:
                 # force the channel (tvg-id) attribute value to lowercase to enable a case-insensitive
                 # xpath lookup with: channel_xpath = 'programme[@channel="' + entry.tvg_id.lower() + '"]'
                 for programme in all_epg_programmes:
@@ -790,7 +797,8 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
             if entry.tvg_id is not None and entry.tvg_id != "" and entry.tvg_id != "None":
                 output_str("creating programme elements for {}".format(entry.tvg_name))
                 # case-insensitive xpath search
-                channel_xpath = 'programme[@channel="' + entry.tvg_id.lower() + '"]'
+                channel_xpath = entry.tvg_id.lower() if not args.preserve_case else entry.tvg_id
+                channel_xpath = 'programme[@channel="' + channel_xpath + '"]'
                 channel_programmes = original_tree.findall(channel_xpath)
                 if len(channel_programmes) > 0:
                     for elem in channel_programmes:

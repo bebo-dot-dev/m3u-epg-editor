@@ -73,7 +73,8 @@ usage: m3u-epg-editor.py [-h] [--json_cfg [JSON_CFG]] [--m3uurl [M3UURL]]
                          [--xml_sort_type [XML_SORT_TYPE]]
                          [--tvh_start [TVH_START]] [--tvh_offset [TVH_OFFSET]]
                          [--no_tvg_id] [--no_epg] [--no_sort]
-                         [--http_for_images] [--outdirectory [OUTDIRECTORY]]
+                         [--http_for_images] [--preserve_case]
+                         [--outdirectory [OUTDIRECTORY]]
                          [--outfilename [OUTFILENAME]] [--log_enabled]
 
 download and optimize m3u/epg files retrieved from a remote web server
@@ -109,6 +110,7 @@ optional arguments:
   --no_sort, -ns        Optionally disable all channel sorting functionality
   --http_for_images, -hi
                         Optionally prevent image attributes being populated where the source contains anything other than a http url i.e. data:image uri content
+  --preserve_case, -pc  Optionally preserve the original case sensitivity of tvg-id and channel attributes as supplied in the original M3U and EPG file data through to the target newly generated M3U and EPG files
   --outdirectory [OUTDIRECTORY], -d [OUTDIRECTORY]
                         The output folder where retrieved and generated file are to be stored
   --outfilename [OUTFILENAME], -f [OUTFILENAME]
