@@ -31,7 +31,7 @@ m3u-epg-editor solves these problems for free on your own network / computer(s).
 #### dependencies:
 `python`
 
-The recommended python version is v2.7.x. Python v3 is **not** currently supported. Python installers can be downloaded from the official python website: [https://www.python.org/downloads/](https://www.python.org/downloads/). In linux, python can also be installed from a package repository with a package manager i.e. `apt`, `yum` etc or a software manager i.e. synaptic
+m3u-epg-editor-py2.py is intended for use with Python v2.7.x and m3u-epg-editor-py3.py is intended for use with Python v3.x. This project will drop support for Python v2 at some point after January 1, 2020 which is when general support for Python v2 officially ends. Python installers can be downloaded from the official python website: [https://www.python.org/downloads/](https://www.python.org/downloads/). In linux, python can also be installed from a package repository with a package manager i.e. `apt`, `yum` etc or a software manager i.e. synaptic
 
 #### python modules used by this script:
 ```
@@ -47,7 +47,7 @@ import gzip
 from xml.etree.cElementTree import Element, SubElement, parse, ElementTree
 import datetime
 import dateutil.parser
-from urllib import url2pathname
+from urllib.request import url2pathname
 from traceback import format_exception
 ```
 
@@ -124,11 +124,11 @@ All runtime arguments can be supplied via the file described by the `--json_cfg 
 #### sample usage calls (urls intentionally incomplete):
 **VaderStreams:**
 ```
-$ python ./m3u-epg-editor.py -m="http://xxx.xxx.xxx/vget?username=<USERNAME>&password=<PASSWORD>&format=ts" -e="http://xxx.xxx/p2.xml.gz" -g="'sports','premium movies'" -c="'willow hd','bein sports espanol hd'" -s="'sky cinema drama hd','sky cinema comedy hd','sky cinema villians hd','sky cinema premiere hd','sky cinema sci-fi & horror hd','sky cinema thriller hd','sky cinema select hd','sky cinema family hd','sky cinema disney hd'" -r=12 -d="/home/target_directory" -f="output_file"
+$ python ./m3u-epg-editor-py3.py -m="http://xxx.xxx.xxx/vget?username=<USERNAME>&password=<PASSWORD>&format=ts" -e="http://xxx.xxx/p2.xml.gz" -g="'sports','premium movies'" -c="'willow hd','bein sports espanol hd'" -s="'sky cinema drama hd','sky cinema comedy hd','sky cinema villians hd','sky cinema premiere hd','sky cinema sci-fi & horror hd','sky cinema thriller hd','sky cinema select hd','sky cinema family hd','sky cinema disney hd'" -r=12 -d="/home/target_directory" -f="output_file"
 ```
 **FabIPTV:**
 ```
-$ python ./m3u-epg-editor.py -m="http://xxx.xxx:8080/get.php?username=<USERNAME>&password=<PASSWORD>&type=m3u_plus&output=ts" -e="http://xxx.xxx:8080/xmltv.php?username=<USERNAME>&password=<PASSWORD>" -g="'uk + 1 channels','uk bt sport','uk documentaries','uk entertainment','uk movies','uk other sports','uk sky sports'" -c="'dave hd'" -s="'bbc one +1','bbc two +1','itv +1','itv 2 +1','itv 3 +1','itv encore +1','itv4 +1','itvbe +1','channel 4 +1','channel 5 +1','sky living +1','sky1 +1'" -r=12 -d="/home/target_directory" -f="output_file"
+$ python ./m3u-epg-editor-py3.py -m="http://xxx.xxx:8080/get.php?username=<USERNAME>&password=<PASSWORD>&type=m3u_plus&output=ts" -e="http://xxx.xxx:8080/xmltv.php?username=<USERNAME>&password=<PASSWORD>" -g="'uk + 1 channels','uk bt sport','uk documentaries','uk entertainment','uk movies','uk other sports','uk sky sports'" -c="'dave hd'" -s="'bbc one +1','bbc two +1','itv +1','itv 2 +1','itv 3 +1','itv encore +1','itv4 +1','itvbe +1','channel 4 +1','channel 5 +1','sky living +1','sky1 +1'" -r=12 -d="/home/target_directory" -f="output_file"
 ```
 ***
 
