@@ -34,6 +34,7 @@ from traceback import format_exception
 
 log_enabled = False
 log_items = []
+start_timestamp = None
 
 
 class M3uItem:
@@ -195,6 +196,9 @@ arg_parser.add_argument('--log_enabled', '-l', action='store_true', help='Option
 
 # main entry point
 def main():
+    global start_timestamp
+    start_timestamp = datetime.datetime.now()
+
     args = validate_args()
     output_str("process started")
 
@@ -415,6 +419,7 @@ def output_str(event_str):
 def save_log(args):
     global log_enabled
     global log_items
+    global start_timestamp
 
     if log_enabled:
         if args is not None and args.outdirectory is not None:
@@ -427,6 +432,13 @@ def save_log(args):
         with open(log_target, "w") as log_file:
             for log_item in log_items:
                 log_file.write("{0}\n".format(log_item))
+
+            runtime = datetime.datetime.now() - start_timestamp
+            mins = (runtime.seconds % 3600) // 60
+            secs = runtime.seconds % 60
+            log_str = output_str("script runtime: %s minutes %s seconds" % (mins, secs))
+            log_file.write("{0}\n".format(log_str))
+
             log_str = output_str("process completed")
             log_file.write("{0}\n".format(log_str))
     else:
