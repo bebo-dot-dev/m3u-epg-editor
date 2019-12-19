@@ -81,6 +81,8 @@ class M3uItem:
                 self.name = re.search('" ?,(.*)$', m3u_fields, re.IGNORECASE).group(1)
             except AttributeError as e:
                 output_str("m3u file parse AttributeError: {0}".format(e))
+            except Exception as ex:
+                output_str("m3u file parse Exception: {0}".format(ex))
 
         if self.tvg_name is None or self.tvg_name == "":
             self.tvg_name = self.name
