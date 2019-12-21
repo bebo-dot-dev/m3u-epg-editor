@@ -41,6 +41,7 @@ import argparse
 import json
 import ast
 import requests
+import io
 import re
 import shutil
 import gzip
@@ -94,7 +95,7 @@ optional arguments:
   --discard_channels [DISCARD_CHANNELS], -dc [DISCARD_CHANNELS]
                         Channels in the m3u to discard. Regex pattern matching is supported
   --include_channels [INCLUDE_CHANNELS], -ic [INCLUDE_CHANNELS]
-                        Channels in the m3u to keep. Regex pattern matching is supported. Channel matched in this argument will always kept, effectively overriding of any other group or channel exclusion configuration.
+                        Channels in the m3u to keep. Regex pattern matching is supported. Channel matched in this argument will always be kept, effectively overriding of any other group or channel exclusion configuration.
   --range [RANGE], -r [RANGE]
                         An optional range window to consider when adding programmes to the epg
   --sortchannels [SORTCHANNELS], -s [SORTCHANNELS]

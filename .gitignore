@@ -4,5 +4,6 @@
 *.txt
 *.gz
 *.sh
-/test.json
+*.json
+!sample_input_args.json
 *.log

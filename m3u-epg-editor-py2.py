@@ -23,6 +23,7 @@ import argparse
 import json
 import ast
 import requests
+import io
 import re
 import shutil
 import gzip
@@ -122,9 +123,9 @@ class FileUriAdapter(requests.adapters.BaseAdapter):
             try:
                 is_gzipped = path.lower().endswith(".gz")
                 if not is_gzipped:
-                    response.raw = open(path, 'rb')
+                    response.raw = io.open(path, "rb", encoding="utf-8")
                 else:
-                    response.raw = gzip.open(path, 'rb')
+                    response.raw = gzip.open(path, "rb")
             except (OSError, IOError) as err:
                 response.status_code = 500
                 response.reason = str(err)
@@ -161,7 +162,7 @@ arg_parser.add_argument('--discard_channels', '-dc', nargs='?',
                         help='Channels in the m3u to discard. Regex pattern matching is supported')
 arg_parser.add_argument('--include_channels', '-ic', nargs='?',
                         help='Channels in the m3u to keep. Regex pattern matching is supported. Channel matched in '
-                             'this argument will always kept, effectively overriding of any other group or channel '
+                             'this argument will always be kept, effectively overriding of any other group or channel '
                              'exclusion configuration.')
 arg_parser.add_argument('--range', '-r', nargs='?',
                         help='An optional range window to consider when adding programmes to the epg')
@@ -202,7 +203,7 @@ def main():
     start_timestamp = datetime.datetime.now()
 
     args = validate_args()
-    output_str("process started")
+    output_str("{0} process started".format(os.path.basename(__file__)))
 
     m3u_entries = load_m3u(args)
     m3u_entries = filter_m3u_entries(args, m3u_entries)
@@ -407,7 +408,7 @@ def output_str(event_str):
     global log_enabled
     global log_items
     try:
-        log_item = "%s %s" % (datetime.datetime.now().isoformat(), event_str)
+        log_item = u"%s %s" % (datetime.datetime.now().isoformat(), event_str)
         print(log_item)
         if log_enabled:
             log_items.append(log_item.strip())
@@ -431,18 +432,18 @@ def save_log(args):
 
         log_target = os.path.join(out_dir, "process.log")
         output_str("saving to log: " + log_target)
-        with open(log_target, "w") as log_file:
+        with io.open(log_target, "w", encoding="utf-8") as log_file:
             for log_item in log_items:
-                log_file.write("{0}\n".format(log_item))
+                log_file.write(u"{0}\n".format(log_item))
 
             runtime = datetime.datetime.now() - start_timestamp
             mins = (runtime.seconds % 3600) // 60
             secs = runtime.seconds % 60
             log_str = output_str("script runtime: %s minutes %s seconds" % (mins, secs))
-            log_file.write("{0}\n".format(log_str))
+            log_file.write(u"{0}\n".format(log_str))
 
             log_str = output_str("process completed")
-            log_file.write("{0}\n".format(log_str))
+            log_file.write(u"{0}\n".format(log_str))
     else:
         output_str("process completed")
 
@@ -482,7 +483,7 @@ def get_m3u(m3u_url):
 def save_original_m3u(out_directory, m3u_response):
     m3u_target = os.path.join(out_directory, "original.m3u8")
     output_str("saving retrieved m3u file: " + m3u_target)
-    with open(m3u_target, "w") as text_file:
+    with io.open(m3u_target, "wb") as text_file:
         text_file.write(m3u_response.content)
         return m3u_target
 
@@ -491,27 +492,31 @@ def save_original_m3u(out_directory, m3u_response):
 def parse_m3u(m3u_filename, allow_no_tvg_id):
     m3u_entries = []
     output_str("parsing m3u into a list of objects")
-    m3u_file = open(m3u_filename, 'r')
-    line = m3u_file.readline()
 
-    if '#EXTM3U' not in line:
-        output_str("{} doesn't start with #EXTM3U, it doesn't appear to be an M3U file".format(m3u_filename))
-        return m3u_entries
+    with io.open(m3u_filename, "r", encoding="utf-8") as m3u_file:
+        line = m3u_file.readline()
 
-    entry = M3uItem(None)
+        if "#EXTM3U" not in line:
+            output_str("{} doesn't start with #EXTM3U, it doesn't appear to be an M3U file".format(m3u_filename))
+            return m3u_entries
 
-    for line in m3u_file:
-        line = line.strip()
-        if line.startswith('#EXTINF:'):
-            m3u_fields = line.split('#EXTINF:0 ')[1] if line.startswith('#EXTINF:0') else line.split('#EXTINF:-1 ')[1]
-            entry = M3uItem(m3u_fields)
-        elif len(line) != 0:
-            entry.url = line
-            if M3uItem.is_valid(entry, allow_no_tvg_id):
-                m3u_entries.append(entry)
-            entry = M3uItem(None)
+        entry = M3uItem(None)
+        file_line_idx = 1
+        try:
+            for line in m3u_file:
+                line = line.strip()
+                if line.startswith('#EXTINF:'):
+                    m3u_fields = line.split('#EXTINF:0 ')[1] if line.startswith('#EXTINF:0') else line.split('#EXTINF:-1 ')[1]
+                    entry = M3uItem(m3u_fields)
+                elif len(line) != 0:
+                    entry.url = line
+                    if M3uItem.is_valid(entry, allow_no_tvg_id):
+                        m3u_entries.append(entry)
+                    entry = M3uItem(None)
+                file_line_idx += 1
+        except Exception as ex:
+            output_str("m3u file read exception on line {0} : {1}".format(file_line_idx, ex))
 
-    m3u_file.close()
     output_str("m3u contains {} items".format(len(m3u_entries)))
     return m3u_entries
 
@@ -531,7 +536,7 @@ def filter_m3u_entries(args, m3u_entries):
             m3u_entries = sorted(m3u_entries, key=lambda entry: entry.tvg_name)
 
         all_channels_name_target = os.path.join(args.outdirectory, "original.channels.txt")
-        with open(all_channels_name_target, "w") as all_channels_file:
+        with io.open(all_channels_name_target, "w", encoding="utf-8") as all_channels_file:
             for m3u_entry in m3u_entries:
                 group_matched = is_item_matched(args.groups, m3u_entry.group_title)
 
@@ -604,10 +609,10 @@ def save_new_m3u(args, m3u_entries):
         filtered_channels_name_target = os.path.join(args.outdirectory, args.outfilename + ".channels.txt")
         output_str("saving new m3u file: " + m3u_target)
 
-        with open(m3u_target, "w") as m3u_target_file:
-            with open(filtered_channels_name_target, "w") as filtered_channels_file:
+        with io.open(m3u_target, "w", encoding="utf-8") as m3u_target_file:
+            with io.open(filtered_channels_name_target, "w", encoding="utf-8") as filtered_channels_file:
 
-                m3u_target_file.write("%s\n" % "#EXTM3U")
+                m3u_target_file.write("%s\n" % u"#EXTM3U")
                 group_title = m3u_entries[0].group_title
 
                 for entry in m3u_entries:
@@ -633,8 +638,8 @@ def save_new_m3u(args, m3u_entries):
                     meta += ' tvg-name="%s"' % entry.tvg_name
 
                     if entry.tvg_id is not None and entry.tvg_id != "":
-                        channelId = entry.tvg_id.lower() if not args.preserve_case else entry.tvg_id
-                        meta += ' tvg-id="%s"' % channelId
+                        channel_id = entry.tvg_id.lower() if not args.preserve_case else entry.tvg_id
+                        meta += ' tvg-id="%s"' % channel_id
 
                     if logo is not None and logo != "":
                         meta += ' tvg-logo="%s"' % logo
@@ -701,7 +706,7 @@ def save_original_epg(is_gzipped, is_http_response, out_directory, epg_response)
     epg_target = os.path.join(out_directory, "original.gz" if is_gzipped else "original.xml")
     output_str("saving retrieved epg file: " + epg_target)
 
-    with open(epg_target, "wb") if not isinstance(epg_response.raw, gzip.GzipFile) else gzip.open(epg_target,
+    with io.open(epg_target, "wb") if not isinstance(epg_response.raw, gzip.GzipFile) else gzip.open(epg_target,
                                                                                                   "wb") as epg_file:
 
         if not isinstance(epg_response.raw, gzip.GzipFile):
@@ -848,7 +853,7 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
 # saves the no_epg_channels list into the file system
 def save_no_epg_channels(args, no_epg_channels):
     no_epg_channels_target = os.path.join(args.outdirectory, "no_epg_channels.txt")
-    with open(no_epg_channels_target, "w") as no_epg_channels_file:
+    with io.open(no_epg_channels_target, "w", encoding="utf-8") as no_epg_channels_file:
         for m3u_entry in no_epg_channels:
             no_epg_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name, m3u_entry.tvg_id))
 
