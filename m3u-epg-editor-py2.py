@@ -203,7 +203,7 @@ def main():
     start_timestamp = datetime.datetime.now()
 
     args = validate_args()
-    output_str("{0} process started".format(os.path.basename(__file__)))
+    output_str("{0} process started with Python v{1}".format(os.path.basename(__file__), sys.version))
 
     m3u_entries = load_m3u(args)
     m3u_entries = filter_m3u_entries(args, m3u_entries)
