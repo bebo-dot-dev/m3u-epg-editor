@@ -832,6 +832,12 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                                 for attr_key in sub_elem.keys():
                                     attr_val = sub_elem.get(attr_key)
                                     new_elem.set(attr_key, attr_val)
+                                for sub_sub_elem in sub_elem:
+                                    new_sub_elem = SubElement(new_elem, sub_sub_elem.tag)
+                                    new_sub_elem.text = sub_sub_elem.text
+                                    for attr_key in sub_sub_elem.keys():
+                                        attr_val = sub_sub_elem.get(attr_key)
+                                        new_sub_elem.set(attr_key, attr_val)
                 else:
                     no_epg_channels.append(entry)
             else:
