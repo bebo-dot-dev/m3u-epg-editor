@@ -30,6 +30,7 @@ import gzip
 from xml.etree.cElementTree import Element, SubElement, parse, ElementTree
 import datetime
 import dateutil.parser
+import tzlocal
 from urllib.request import url2pathname
 from traceback import format_exception
 
@@ -753,13 +754,12 @@ def indent(root_elem, level=0):
             root_elem.tail = i
 
 
-# returns an indicator whether the given programme in within the configured range window
-def is_in_range(args, programme):
-    programme_start = dateutil.parser.parse(programme.get("start"))
-    now = datetime.datetime.now(programme_start.tzinfo)
+# returns an indicator whether the given timestamp in within the configured range window
+def is_in_range(args, timestamp):
+    now = datetime.datetime.now(timestamp.tzinfo)
     range_start = now - datetime.timedelta(hours=args.range)
     range_end = now + datetime.timedelta(hours=args.range)
-    return range_start <= programme_start <= range_end
+    return range_start <= timestamp <= range_end
 
 
 # creates a new epg from the epg represented by original_epg_filename using the given m3u_entries as a template
@@ -793,7 +793,7 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                         new_elem.set(attr_key, attr_val)
 
         if args.no_tvg_id and args.force_epg:
-            # create a channel element for every channel present in the m3u where this is no tvg_id and where there is a tvg_name value
+            # create a channel element for every channel present in the m3u where there is no tvg_id and where there is a tvg_name value
             for entry in m3u_entries:
                 if entry.tvg_id is None or entry.tvg_id == "" or entry.tvg_id == "None":
                     output_str("creating channel element for m3u entry from tvg-name value {}".format(entry.tvg_name))
@@ -838,7 +838,8 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                 channel_programmes = original_tree.findall(channel_xpath)
                 if len(channel_programmes) > 0:
                     for elem in channel_programmes:
-                        if is_in_range(args, elem):
+                        programme_start_timestamp = dateutil.parser.parse(elem.get("start"))
+                        if is_in_range(args, programme_start_timestamp):
                             programme = SubElement(new_root, elem.tag)
                             for attr_key in elem.keys():
                                 attr_val = elem.get(attr_key)
@@ -861,6 +862,25 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
             else:
                 if not args.no_tvg_id and not args.force_epg:
                     no_epg_channels.append(entry)
+
+        if args.no_tvg_id and args.force_epg:
+            # create programme elements for every channel present in the m3u where there is no tvg_id and where there is a tvg_name value
+            for entry in m3u_entries:
+                if entry.tvg_id is None or entry.tvg_id == "" or entry.tvg_id == "None":
+                    output_str("creating pseudo programme elements for m3u entry {}".format(entry.tvg_name))
+                    programme_start_timestamp = datetime.datetime.now(tzlocal.get_localzone())
+                    for i in range(1, 84): # create programme elements within a max 7 day window and no more limited by the configured range
+                        if is_in_range(args, programme_start_timestamp):
+                            programme_end_timestamp = programme_start_timestamp + datetime.timedelta(hours=2)
+                            programme = SubElement(new_root, "programme")
+                            programme.set("start", programme_start_timestamp.strftime("%Y%m%d%H0000 %z"))
+                            programme.set("stop", programme_end_timestamp.strftime("%Y%m%d%H0000 %z"))
+                            programme.set("channel", entry.tvg_name)
+                            title_elem = SubElement(programme, "title")
+                            title_elem.text = entry.tvg_name
+                            desc_elem = SubElement(programme, "desc")
+                            desc_elem.text = entry.tvg_name
+                            programme_start_timestamp = programme_start_timestamp + datetime.timedelta(hours=i*2)
 
         indent(new_root)
         tree = ElementTree(new_root)
