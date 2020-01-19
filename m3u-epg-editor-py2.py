@@ -182,6 +182,10 @@ arg_parser.add_argument('--no_tvg_id', '-nt', action='store_true',
                         help='Optionally allow channels with no tvg-id attribute to be considered as valid channels')
 arg_parser.add_argument('--no_epg', '-ne', action='store_true',
                         help='Optionally prevent the download of and the creation of any EPG xml data')
+arg_parser.add_argument('--force_epg', '-fe', action='store_true',
+                        help='Works in tandem with no_tvg_id and no_epg. When EPG processing is enabled and when this '
+                              'option is specified as true, the generated EPG file will be populated with elements for '
+                              'channels in the m3u file that normally would have no EPG data')
 arg_parser.add_argument('--no_sort', '-ns', action='store_true',
                         help='Optionally disable all channel sorting functionality')
 arg_parser.add_argument('--http_for_images', '-hi', action='store_true',
@@ -366,6 +370,8 @@ def hydrate_args_from_json(args, json_cfg_file_path):
 
         if "no_tvg_id" in json_data:
             args.no_tvg_id = json_data["no_tvg_id"]
+        if "force_epg" in json_data:
+            args.force_epg = json_data["force_epg"]
         if "no_sort" in json_data:
             args.no_sort = json_data["no_sort"]
         if "http_for_images" in json_data:
@@ -786,6 +792,17 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                             attr_val = attr_val if attr_val.startswith("http") else ""
                         new_elem.set(attr_key, attr_val)
 
+        if args.no_tvg_id and args.force_epg:
+            # create a channel element for every channel present in the m3u where this is no tvg_id and where there is a tvg_name value
+            for entry in m3u_entries:
+                if entry.tvg_id is None or entry.tvg_id == "" or entry.tvg_id == "None":
+                    output_str("creating channel element for m3u entry from tvg-name value {}".format(entry.tvg_name))
+                    epg_channel_count += 1
+                    new_channel = SubElement(new_root, "channel")
+                    new_channel.set("id", entry.tvg_name)
+                    new_elem = SubElement(new_channel, "display-name")
+                    new_elem.text = entry.tvg_name
+
         if epg_channel_count > 0:
 
             # perform any specified channel element sorting
@@ -839,9 +856,11 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                                         attr_val = sub_sub_elem.get(attr_key)
                                         new_sub_elem.set(attr_key, attr_val)
                 else:
-                    no_epg_channels.append(entry)
+                    if not args.no_tvg_id and not args.force_epg:
+                        no_epg_channels.append(entry)
             else:
-                no_epg_channels.append(entry)
+                if not args.no_tvg_id and not args.force_epg:
+                    no_epg_channels.append(entry)
 
         indent(new_root)
         tree = ElementTree(new_root)
