@@ -857,10 +857,10 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                                         attr_val = sub_sub_elem.get(attr_key)
                                         new_sub_elem.set(attr_key, attr_val)
                 else:
-                    if not args.no_tvg_id and not args.force_epg:
+                    if not args.no_tvg_id or not args.force_epg:
                         no_epg_channels.append(entry)
             else:
-                if not args.no_tvg_id and not args.force_epg:
+                if not args.no_tvg_id or not args.force_epg:
                     no_epg_channels.append(entry)
 
         if args.no_tvg_id and args.force_epg:
