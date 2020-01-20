@@ -38,6 +38,7 @@
     "tvh_offset": 0,
     "no_tvg_id": false,
     "no_epg": false,
+    "force_epg": false,
     "no_sort": false,
     "outdirectory": "/home/target_directory",
     "outfilename": "output_file",

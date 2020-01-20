@@ -48,6 +48,7 @@ import gzip
 from xml.etree.cElementTree import Element, SubElement, parse, ElementTree
 import datetime
 import dateutil.parser
+import tzlocal
 from urllib.request import url2pathname
 from traceback import format_exception
 ```
@@ -64,19 +65,29 @@ The requests module can be installed with pip i.e. `pip install requests`
 
 #### command line options:
 ```
-$ python ./m3u-epg-editor.py --help
-usage: m3u-epg-editor.py [-h] [--json_cfg [JSON_CFG]] [--m3uurl [M3UURL]]
-                         [--epgurl [EPGURL]] [--groups [GROUPS]]
-                         [--groupmode [GROUPMODE]]
-                         [--discard_channels [DISCARD_CHANNELS]]
-                         [--include_channels [INCLUDE_CHANNELS]]
-                         [--range [RANGE]] [--sortchannels [SORTCHANNELS]]
-                         [--xml_sort_type [XML_SORT_TYPE]]
-                         [--tvh_start [TVH_START]] [--tvh_offset [TVH_OFFSET]]
-                         [--no_tvg_id] [--no_epg] [--no_sort]
-                         [--http_for_images] [--preserve_case]
-                         [--outdirectory [OUTDIRECTORY]]
-                         [--outfilename [OUTFILENAME]] [--log_enabled]
+$ python ./m3u-epg-editor-py3.py --help
+usage: m3u-epg-editor-py3.py [-h]
+                             [--json_cfg [JSON_CFG]]
+                             [--m3uurl [M3UURL]] 
+                             [--epgurl [EPGURL]]
+                             [--groups [GROUPS]]
+                             [--groupmode [GROUPMODE]]
+                             [--discard_channels [DISCARD_CHANNELS]]
+                             [--include_channels [INCLUDE_CHANNELS]]
+                             [--range [RANGE]]
+                             [--sortchannels [SORTCHANNELS]]
+                             [--xml_sort_type [XML_SORT_TYPE]]
+                             [--tvh_start [TVH_START]]
+                             [--tvh_offset [TVH_OFFSET]]
+                             [--no_tvg_id]
+                             [--no_epg]
+                             [--force_epg]
+                             [--no_sort]
+                             [--http_for_images]
+                             [--preserve_case]
+                             [--outdirectory [OUTDIRECTORY]]
+                             [--outfilename [OUTFILENAME]]
+                             [--log_enabled]
 
 download and optimize m3u/epg files retrieved from a remote web server
 
@@ -108,6 +119,7 @@ optional arguments:
                         An optional offset value applied to the Tvheadend tvh-chnum attribute within each channel group
   --no_tvg_id, -nt      Optionally allow channels with no tvg-id attribute to be considered as valid channels
   --no_epg, -ne         Optionally prevent the download of and the creation of any EPG xml data
+  --force_epg, -fe      Works in tandem with no_tvg_id and no_epg. When EPG processing is enabled and when this option is specified as true, the generated EPG file will be populated with elements for channels in the m3u file that normally would have no EPG data
   --no_sort, -ns        Optionally disable all channel sorting functionality
   --http_for_images, -hi
                         Optionally prevent image attributes being populated where the source contains anything other than a http url i.e. data:image uri content
