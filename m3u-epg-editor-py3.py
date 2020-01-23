@@ -15,6 +15,8 @@ This script has been tested with:
 2. fab m3u and epg files pulled from:
     http://<FAB_DOMAIN>/get.php?username=<USERNAME>&password=<PASSWORD>&type=m3u_plus&output=ts
     http://<FAB_DOMAIN>/xmltv.php?username=<USERNAME>&password=<PASSWORD>
+
+This script is intended for use with Python v3.x
 """
 
 import sys
