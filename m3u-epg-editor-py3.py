@@ -151,9 +151,9 @@ arg_parser = argparse.ArgumentParser(
     description='download and optimize m3u/epg files retrieved from a remote web server',
     formatter_class=argparse.RawTextHelpFormatter)
 arg_parser.add_argument('--json_cfg', '-j', nargs='?',
-                        help='A json input configuration file containing argument values')
-arg_parser.add_argument('--m3uurl', '-m', nargs='?', help='The url to pull the m3u file from')
-arg_parser.add_argument('--epgurl', '-e', nargs='?', help='The url to pull the epg file from')
+                        help='A json input configuration file containing argument values.')
+arg_parser.add_argument('--m3uurl', '-m', nargs='?', help='The url to pull the m3u file from. Both http:// and file:// protocols are supported.')
+arg_parser.add_argument('--epgurl', '-e', nargs='?', help='The url to pull the epg file from. Both http:// and file:// protocols are supported.')
 arg_parser.add_argument('--groups', '-g', nargs='?', help='Channel groups in the m3u to keep or discard. The default '
                                                           'mode is to keep the specified groups, switch to discard '
                                                           'mode with the -gm / --groupmode argument')

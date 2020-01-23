@@ -98,11 +98,11 @@ download and optimize m3u/epg files retrieved from a remote web server
 optional arguments:
   -h, --help            show this help message and exit
   --json_cfg [JSON_CFG], -j [JSON_CFG]
-                        A json input configuration file containing argument values
+                        A json input configuration file containing argument values.
   --m3uurl [M3UURL], -m [M3UURL]
-                        The url to pull the m3u file from
+                        The url to pull the m3u file from. Both http:// and file:// protocols are supported.
   --epgurl [EPGURL], -e [EPGURL]
-                        The url to pull the epg file from
+                        The url to pull the epg file from. Both http:// and file:// protocols are supported.
   --groups [GROUPS], -g [GROUPS]
                         Channel groups in the m3u to keep or discard. The default mode is to keep the specified groups, switch to discard mode with the -gm / --groupmode argument
   --groupmode [GROUPMODE], -gm [GROUPMODE]
