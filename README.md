@@ -57,14 +57,16 @@ from urllib.request import url2pathname
 from traceback import format_exception
 ```
 
-#### installing requests:
-The python `requests` module is not installed by default when python is installed. This script has a dependency on the requests module to enable HTTP requests to be performed; the requests module needs to be installed for this script to work.
+#### installing required modules:
+The majority of the modules mentioned above will be installed and available by default because they are a core part of Python
 
-If the requests module is not installed you'll see a runtime error that looks something like this when you attempt to run the script:
+Python modules that are not included as part of a Python installation that do need to be installed are:
 
-`ImportError: no module named requests`.
+* `requests`
+* `python-dateutil`
+* `tzlocal`
 
-The requests module can be installed with pip i.e. `pip install requests`
+i.e `pip install requests python-dateutil tzlocal`
 ***
 
 #### command line options:
