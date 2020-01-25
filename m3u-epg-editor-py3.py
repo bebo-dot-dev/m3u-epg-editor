@@ -149,7 +149,7 @@ class FileUriAdapter(requests.adapters.BaseAdapter):
 
 arg_parser = argparse.ArgumentParser(
     description='download and optimize m3u/epg files retrieved from a remote web server',
-    formatter_class=argparse.RawTextHelpFormatter)
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 arg_parser.add_argument('--json_cfg', '-j', nargs='?',
                         help='A json input configuration file containing argument values.')
 arg_parser.add_argument('--m3uurl', '-m', nargs='?', help='The url to pull the m3u file from. Both http:// and file:// protocols are supported.')
