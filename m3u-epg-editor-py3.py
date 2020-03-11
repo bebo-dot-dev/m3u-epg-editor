@@ -681,6 +681,7 @@ def save_new_m3u(args, m3u_entries):
 ########################################################################################################################
 # downloads an epg gzip file, saves it, extracts it and returns the path to the extracted epg xml
 def load_epg(args):
+    is_gzipped = False
     epg_response = get_epg(args.epgurl)
     if epg_response.status_code == 200:
         if args.epgurl.lower().endswith(".gz") or epg_response.headers['Content-Type'] == "application/x-gzip":
