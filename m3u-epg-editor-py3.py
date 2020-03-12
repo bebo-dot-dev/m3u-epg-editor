@@ -683,8 +683,7 @@ def save_new_m3u(args, m3u_entries):
 def load_epg(args):
     epg_response = get_epg(args.epgurl)
     if epg_response.status_code == 200:
-        if args.epgurl.lower().endswith(".gz") or epg_response.headers['Content-Type'] == "application/x-gzip":
-            is_gzipped = True
+        is_gzipped = args.epgurl.lower().endswith(".gz") or epg_response.headers['Content-Type'] == "application/x-gzip"
         is_http_response = args.epgurl.lower().startswith("http")
         epg_filename = save_original_epg(is_gzipped, is_http_response, args.outdirectory, epg_response)
         if is_http_response:
