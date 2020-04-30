@@ -126,7 +126,7 @@ class FileUriAdapter(requests.adapters.BaseAdapter):
             try:
                 is_gzipped = path.lower().endswith(".gz")
                 if not is_gzipped:
-                    response.raw = io.open(path, "rb", encoding="utf-8")
+                    response.raw = io.open(path, "rb")
                 else:
                     response.raw = gzip.open(path, "rb")
             except (OSError, IOError) as err:
