@@ -167,6 +167,12 @@ arg_parser.add_argument('--include_channels', '-ic', nargs='?',
                         help='Channels in the m3u to keep. Regex pattern matching is supported. Channel matched in '
                              'this argument will always be kept, effectively overriding of any other group or channel '
                              'exclusion configuration.')
+arg_parser.add_argument('--group_transforms', '-gt', nargs='?', default=[],
+                        help='A json array of key value pairs representing source group names to target groups names '
+                             'to be transformed at processing time')
+arg_parser.add_argument('--channel_transforms', '-ct', nargs='?', default=[],
+                        help='A json array of key value pairs representing source channel names to target channel names '
+                             'to be transformed at processing time')
 arg_parser.add_argument('--range', '-r', nargs='?',
                         help='An optional range window to consider when adding programmes to the epg')
 arg_parser.add_argument('--sortchannels', '-s', nargs='?',
@@ -265,6 +271,12 @@ def validate_args():
         else:
             args.include_channels = list()
 
+        if args.group_transforms:
+            args.group_transforms = json.loads(args.group_transforms)["group_transforms"]
+
+        if args.channel_transforms:
+            args.channel_transforms = json.loads(args.channel_transforms)["channel_transforms"]
+
         if args.range:
             args.range = int(args.range)
         else:
@@ -344,6 +356,16 @@ def hydrate_args_from_json(args, json_cfg_file_path):
 
         if not type(args.include_channels) is list:
             abort_process('include_channels is expected to be a json array in {}'.format(json_cfg_file_path), 1, args)
+
+        if "group_transforms" in json_data:
+            args.group_transforms = json_data["group_transforms"]
+        else:
+            args.group_transforms = []
+
+        if "channel_transforms" in json_data:
+            args.channel_transforms = json_data["channel_transforms"]
+        else:
+            args.channel_transforms = []
 
         if "range" in json_data:
             args.range = json_data["range"]
@@ -467,7 +489,7 @@ def load_m3u(args):
         m3u_filename = save_original_m3u(args.outdirectory, m3u_response)
         if args.m3uurl.lower().startswith('http'):
             m3u_response.close()
-        m3u_entries = parse_m3u(m3u_filename, args.no_tvg_id)
+        m3u_entries = parse_m3u(m3u_filename, args)
         return m3u_entries
     else:
         output_str("the HTTP GET request to {} returned status code {}".format(args.m3uurl, m3u_response.status_code))
@@ -498,7 +520,7 @@ def save_original_m3u(out_directory, m3u_response):
 
 
 # parses the m3u file represented by m3u_filename into a list of M3uItem objects and returns them
-def parse_m3u(m3u_filename, allow_no_tvg_id):
+def parse_m3u(m3u_filename, args):
     m3u_entries = []
     output_str("parsing m3u into a list of objects")
 
@@ -519,7 +541,7 @@ def parse_m3u(m3u_filename, allow_no_tvg_id):
                     entry = M3uItem(m3u_fields)
                 elif len(line) != 0:
                     entry.url = line
-                    if M3uItem.is_valid(entry, allow_no_tvg_id):
+                    if M3uItem.is_valid(entry, args.no_tvg_id):
                         m3u_entries.append(entry)
                     entry = M3uItem(None)
                 file_line_idx += 1
@@ -529,6 +551,15 @@ def parse_m3u(m3u_filename, allow_no_tvg_id):
     output_str("m3u contains {} items".format(len(m3u_entries)))
     return m3u_entries
 
+
+# transforms the given string_value using the supplied transforms list of dictionary items
+def transform_string_value(string_value, transforms):
+    for transform_item in transforms:
+        src_value = next(iter(transform_item.keys()))
+        replacement_value = next(iter(transform_item.values()))
+        if src_value in string_value:
+            string_value = string_value.replace(src_value, replacement_value)
+    return string_value
 
 # filters the given m3u_entries using the supplied groups
 def filter_m3u_entries(args, m3u_entries):
@@ -547,6 +578,7 @@ def filter_m3u_entries(args, m3u_entries):
         all_channels_name_target = os.path.join(args.outdirectory, "original.channels.txt")
         with io.open(all_channels_name_target, "w", encoding="utf-8") as all_channels_file:
             for m3u_entry in m3u_entries:
+                all_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name, m3u_entry.group_title))
                 group_matched = is_item_matched(args.groups, m3u_entry.group_title)
 
                 # check whether the given group is wanted based on the groupmode argument value (defaults to "keep")
@@ -560,9 +592,10 @@ def filter_m3u_entries(args, m3u_entries):
                 channel_always_kept = is_item_matched(args.include_channels, m3u_entry.tvg_name)
 
                 if (group_included and not channel_discarded) or channel_always_kept:
+                    m3u_entry.group_title = transform_string_value(m3u_entry.group_title, args.group_transforms)
+                    m3u_entry.tvg_name = transform_string_value(m3u_entry.tvg_name, args.channel_transforms)
+                    m3u_entry.name = transform_string_value(m3u_entry.name, args.channel_transforms)
                     filtered_m3u_entries.append(m3u_entry)
-
-                all_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name, m3u_entry.group_title))
 
         output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
     return filtered_m3u_entries
@@ -683,7 +716,9 @@ def save_new_m3u(args, m3u_entries):
 def load_epg(args):
     epg_response = get_epg(args.epgurl)
     if epg_response.status_code == 200:
-        is_gzipped = args.epgurl.lower().endswith(".gz") or epg_response.headers['Content-Type'] == "application/x-gzip"
+        is_gzipped = \
+            args.epgurl.lower().endswith(".gz") or \
+            ("content-type" in epg_response.headers and epg_response.headers["content-type"] == "application/x-gzip")
         is_http_response = args.epgurl.lower().startswith("http")
         epg_filename = save_original_epg(is_gzipped, is_http_response, args.outdirectory, epg_response)
         if is_http_response:
@@ -787,7 +822,10 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                 new_channel.set("id", channel_id.lower() if not args.preserve_case else channel_id)
                 for elem in channel:
                     new_elem = SubElement(new_channel, elem.tag)
-                    new_elem.text = elem.text
+                    elem_text = elem.text
+                    if new_elem.tag.lower() == "display-name":
+                        elem_text = transform_string_value(elem_text, args.channel_transforms)
+                    new_elem.text = elem_text
                     for attr_key in elem.keys():
                         attr_val = elem.get(attr_key)
                         if elem.tag.lower() == "icon" and args.http_for_images:
