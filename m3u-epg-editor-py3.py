@@ -801,7 +801,8 @@ def is_in_range(args, timestamp):
 
 # creates a new epg from the epg represented by original_epg_filename using the given m3u_entries as a template
 def create_new_epg(args, original_epg_filename, m3u_entries):
-    output_str("creating new xml epg for {} m3u items".format(len(m3u_entries)))
+    tvg_id_unique_entries = {e.tvg_id.lower(): e for e in m3u_entries}.values()
+    output_str("creating new xml epg for {} m3u items".format(len(tvg_id_unique_entries)))
     try:
         xml_parser = XMLParser(recover=True)
         original_tree = parse(original_epg_filename, xml_parser)
@@ -814,9 +815,13 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
 
         # create a channel element for every channel present in the m3u
         epg_channel_count = 0
+        created_channels = []
         for channel in original_root.iter('channel'):
             channel_id = channel.get("id")
-            if channel_id is not None and channel_id != "" and any(x.tvg_id.lower() == channel_id.lower() for x in m3u_entries):
+            channel_created = any(u == channel_id for u in created_channels)
+            if channel_id is not None and channel_id != "" and \
+                    not channel_created and \
+                    any(x.tvg_id.lower() == channel_id.lower() for x in tvg_id_unique_entries):
                 output_str("creating channel element for {}".format(channel_id))
                 epg_channel_count += 1
                 new_channel = SubElement(new_root, "channel")
@@ -832,6 +837,7 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                         if elem.tag.lower() == "icon" and args.http_for_images:
                             attr_val = attr_val if attr_val.startswith("http") else ""
                         new_elem.set(attr_key, attr_val)
+                created_channels.append(channel_id)
 
         if args.no_tvg_id and args.force_epg:
             # create a channel element for every channel present in the m3u where there is no tvg_id and where there is a tvg_name value
@@ -854,7 +860,7 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
             elif args.xml_sort_type == 'm3u':
                 channels = new_root.findall("channel[@id]")
                 m3u_sorted_channels = sorted(channels, key=lambda
-                    ch_elem: (ch_elem.tag, [x.tvg_id.lower() for x in m3u_entries].index(ch_elem.get('id').lower())))
+                    ch_elem: (ch_elem.tag, [x.tvg_id.lower() for x in tvg_id_unique_entries].index(ch_elem.get('id').lower())))
                 new_root[:] = m3u_sorted_channels
 
             all_epg_programmes_xpath = 'programme'
@@ -870,7 +876,7 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
 
         # now copy all programme elements from the original epg for every channel present in the m3u
         no_epg_channels = []
-        for entry in m3u_entries:
+        for entry in tvg_id_unique_entries:
             if entry.tvg_id is not None and entry.tvg_id != "" and entry.tvg_id != "None":
                 output_str("creating programme elements for {}".format(entry.tvg_name))
                 # case-insensitive xpath search
