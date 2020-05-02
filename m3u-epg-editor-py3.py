@@ -29,7 +29,7 @@ import io
 import re
 import shutil
 import gzip
-from xml.etree.cElementTree import Element, SubElement, parse, ElementTree
+from lxml.etree import Element, SubElement, parse, ElementTree, XMLParser
 import datetime
 import dateutil.parser
 import tzlocal
@@ -803,7 +803,8 @@ def is_in_range(args, timestamp):
 def create_new_epg(args, original_epg_filename, m3u_entries):
     output_str("creating new xml epg for {} m3u items".format(len(m3u_entries)))
     try:
-        original_tree = parse(original_epg_filename)
+        xml_parser = XMLParser(recover=True)
+        original_tree = parse(original_epg_filename, xml_parser)
         original_root = original_tree.getroot()
 
         new_root = Element("tv")

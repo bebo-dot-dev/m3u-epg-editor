@@ -49,7 +49,7 @@ import io
 import re
 import shutil
 import gzip
-from xml.etree.cElementTree import Element, SubElement, parse, ElementTree
+from lxml.etree import Element, SubElement, parse, ElementTree, XMLParser
 import datetime
 import dateutil.parser
 import tzlocal
@@ -63,10 +63,11 @@ The majority of the modules mentioned above will be installed and available by d
 Python modules that are not included as part of a Python installation that do need to be installed are:
 
 * `requests`
+* `lxml`
 * `python-dateutil`
 * `tzlocal`
 
-i.e `pip install requests python-dateutil tzlocal`
+i.e `pip install requests lxml python-dateutil tzlocal`
 ***
 
 #### command line options:
