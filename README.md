@@ -78,6 +78,7 @@ usage: m3u-epg-editor-py3.py [-h] [--json_cfg [JSON_CFG]] [--m3uurl [M3UURL]]
                              [--groupmode [GROUPMODE]]
                              [--discard_channels [DISCARD_CHANNELS]]
                              [--include_channels [INCLUDE_CHANNELS]]
+                             [--id_transforms [ID_TRANSFORMS]]
                              [--group_transforms [GROUP_TRANSFORMS]]
                              [--channel_transforms [CHANNEL_TRANSFORMS]]
                              [--range [RANGE]] [--sortchannels [SORTCHANNELS]]
@@ -121,6 +122,10 @@ optional arguments:
                         always be kept, effectively overriding of any other
                         group or channel exclusion configuration. (default:
                         None)
+  --id_transforms [ID_TRANSFORMS], -it [ID_TRANSFORMS]
+                        A json array of key value pairs representing source
+                        channel name values to target tvg-id values to be
+                        transformed at processing time (default: [])
   --group_transforms [GROUP_TRANSFORMS], -gt [GROUP_TRANSFORMS]
                         A json array of key value pairs representing source
                         group names to target groups names to be transformed

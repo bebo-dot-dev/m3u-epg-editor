@@ -167,6 +167,9 @@ arg_parser.add_argument('--include_channels', '-ic', nargs='?',
                         help='Channels in the m3u to keep. Regex pattern matching is supported. Channel matched in '
                              'this argument will always be kept, effectively overriding of any other group or channel '
                              'exclusion configuration.')
+arg_parser.add_argument('--id_transforms', '-it', nargs='?', default=[],
+                        help='A json array of key value pairs representing source channel name values to target tvg-id values '
+                             'to be transformed at processing time')
 arg_parser.add_argument('--group_transforms', '-gt', nargs='?', default=[],
                         help='A json array of key value pairs representing source group names to target groups names '
                              'to be transformed at processing time')
@@ -271,6 +274,9 @@ def validate_args():
         else:
             args.include_channels = list()
 
+        if args.id_transforms:
+            args.id_transforms = json.loads(args.id_transforms)["id_transforms"]
+
         if args.group_transforms:
             args.group_transforms = json.loads(args.group_transforms)["group_transforms"]
 
@@ -356,6 +362,11 @@ def hydrate_args_from_json(args, json_cfg_file_path):
 
         if not type(args.include_channels) is list:
             abort_process('include_channels is expected to be a json array in {}'.format(json_cfg_file_path), 1, args)
+
+        if "id_transforms" in json_data:
+            args.id_transforms = json_data["id_transforms"]
+        else:
+            args.id_transforms = []
 
         if "group_transforms" in json_data:
             args.group_transforms = json_data["group_transforms"]
@@ -553,11 +564,14 @@ def parse_m3u(m3u_filename, args):
 
 
 # transforms the given string_value using the supplied transforms list of dictionary items
-def transform_string_value(string_value, transforms):
+def transform_string_value(string_value, compare_value, transforms):
     for transform_item in transforms:
         src_value = next(iter(transform_item.keys()))
         replacement_value = next(iter(transform_item.values()))
-        if src_value in string_value:
+        if compare_value is not None:
+            if compare_value.startswith(src_value):
+                string_value = replacement_value
+        elif src_value in string_value:
             string_value = string_value.replace(src_value, replacement_value)
     return string_value
 
@@ -592,9 +606,10 @@ def filter_m3u_entries(args, m3u_entries):
                 channel_always_kept = is_item_matched(args.include_channels, m3u_entry.tvg_name)
 
                 if (group_included and not channel_discarded) or channel_always_kept:
-                    m3u_entry.group_title = transform_string_value(m3u_entry.group_title, args.group_transforms)
-                    m3u_entry.tvg_name = transform_string_value(m3u_entry.tvg_name, args.channel_transforms)
-                    m3u_entry.name = transform_string_value(m3u_entry.name, args.channel_transforms)
+                    m3u_entry.tvg_id = transform_string_value(m3u_entry.tvg_id, m3u_entry.tvg_name, args.id_transforms)
+                    m3u_entry.group_title = transform_string_value(m3u_entry.group_title, None, args.group_transforms)
+                    m3u_entry.tvg_name = transform_string_value(m3u_entry.tvg_name, None, args.channel_transforms)
+                    m3u_entry.name = transform_string_value(m3u_entry.name, None, args.channel_transforms)
                     filtered_m3u_entries.append(m3u_entry)
 
         output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
@@ -677,11 +692,11 @@ def save_new_m3u(args, m3u_entries):
 
                         meta += ' tvh-chnum="%s"' % idx
 
-                    meta += ' tvg-name="%s"' % entry.tvg_name
-
                     if entry.tvg_id is not None and entry.tvg_id != "":
                         channel_id = entry.tvg_id.lower() if not args.preserve_case else entry.tvg_id
                         meta += ' tvg-id="%s"' % channel_id
+
+                    meta += ' tvg-name="%s"' % entry.tvg_name
 
                     if logo is not None and logo != "":
                         meta += ' tvg-logo="%s"' % logo
@@ -830,7 +845,7 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                     new_elem = SubElement(new_channel, elem.tag)
                     elem_text = elem.text
                     if new_elem.tag.lower() == "display-name":
-                        elem_text = transform_string_value(elem_text, args.channel_transforms)
+                        elem_text = transform_string_value(elem_text, None, args.channel_transforms)
                     new_elem.text = elem_text
                     for attr_key in elem.keys():
                         attr_val = elem.get(attr_key)
