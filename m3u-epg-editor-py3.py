@@ -676,7 +676,7 @@ def save_new_m3u(args, m3u_entries):
 
                     meta = "#EXTINF:-1"
 
-                    if args.http_for_images:
+                    if args.http_for_images and entry.tvg_logo is not None:
                         logo = entry.tvg_logo if entry.tvg_logo.startswith("http") else ""
                     else:
                         logo = entry.tvg_logo
