@@ -345,7 +345,7 @@ def hydrate_args_from_json(args, json_cfg_file_path):
         args.groups = set(args.group_idx)
 
         if "groupmode" in json_data:
-            args.groupmode = (json_data["groupmode"]).encode('utf-8')
+            args.groupmode = (json_data["groupmode"])
 
         if "discard_channels" in json_data:
             args.discard_channels = json_data["discard_channels"]
