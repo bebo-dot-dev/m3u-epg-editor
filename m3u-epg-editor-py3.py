@@ -579,7 +579,8 @@ def transform_string_value(string_value, compare_value, transforms):
 def filter_m3u_entries(args, m3u_entries):
     filtered_m3u_entries = []
     if m3u_entries is not None and len(m3u_entries) > 0:
-        output_str("keeping channel groups in this list {}".format(str(args.group_idx)))
+        keeping_discarding = "keeping" if args.groupmode == "keep" else "discarding"
+        output_str("{} channel groups in this list {}".format(keeping_discarding, str(args.group_idx)))
         if len(args.discard_channels) > 0:
             output_str("ignoring channels in this list {}".format(str(args.discard_channels)))
         if len(args.include_channels) > 0:
@@ -652,8 +653,8 @@ def sort_m3u_entries(args, m3u_entries):
         m3u_entries = sorted(m3u_entries, key=lambda entry: (entry.group_idx, entry.channel_idx))
     else:
         # no specific sort channel order is specified so sort the entries by group and channel name
-        output_str("desired channel sort order: {}".format(str(args.group_idx)))
-        m3u_entries = sorted(m3u_entries, key=lambda entry: (entry.group_idx, entry.tvg_name))
+        output_str("sorting filtered items alphabetically by group and channel name")
+        m3u_entries = sorted(m3u_entries, key=lambda entry: (entry.group_title, entry.tvg_name))
 
     return m3u_entries
 
