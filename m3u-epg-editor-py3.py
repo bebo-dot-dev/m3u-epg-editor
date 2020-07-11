@@ -569,7 +569,7 @@ def transform_string_value(string_value, compare_value, transforms):
         src_value = next(iter(transform_item.keys()))
         replacement_value = next(iter(transform_item.values()))
         if compare_value is not None:
-            if compare_value.startswith(src_value):
+            if compare_value == src_value:
                 string_value = replacement_value
         elif src_value in string_value:
             string_value = string_value.replace(src_value, replacement_value)
