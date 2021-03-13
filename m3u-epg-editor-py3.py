@@ -573,6 +573,8 @@ def transform_string_value(string_value, compare_value, transforms):
                 string_value = replacement_value
         elif src_value in string_value:
             string_value = string_value.replace(src_value, replacement_value)
+        else:
+            string_value = re.sub(src_value, replacement_value, string_value)
     return string_value
 
 # filters the given m3u_entries using the supplied groups
