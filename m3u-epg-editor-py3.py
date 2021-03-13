@@ -826,6 +826,10 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
         original_tree = parse(original_epg_filename, xml_parser)
         original_root = original_tree.getroot()
 
+        if original_root is None:
+            output_str("epg creation failure, the supplied source {0} epg file appears to have no root element. Check the source data.".format(original_epg_filename))
+            return None
+
         new_root = Element("tv")
         new_root.set("source-info-name", "py-m3u-epg-editor")
         new_root.set("generator-info-name", "py-m3u-epg-editor")
