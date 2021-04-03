@@ -218,8 +218,8 @@ def main():
     global start_timestamp
     start_timestamp = datetime.datetime.now()
 
-    args = validate_args()
     output_str("{0} process started with Python v{1}".format(os.path.basename(__file__), sys.version))
+    args = validate_args()
 
     m3u_entries = load_m3u(args)
     m3u_entries = filter_m3u_entries(args, m3u_entries)
@@ -244,6 +244,8 @@ def main():
 def validate_args():
     global log_enabled
     args = arg_parser.parse_args()
+
+    output_str("input script arguments: {0}".format(str(args)))
 
     if args.json_cfg:
         args = hydrate_args_from_json(args, args.json_cfg)
@@ -318,6 +320,8 @@ def validate_args():
     if not args.outfilename:
         abort_process('--outfilename is mandatory', 1, args)
 
+    output_str("determined runtime script arguments: {0}".format(str(args)))
+
     return args
 
 
@@ -325,7 +329,11 @@ def validate_args():
 def hydrate_args_from_json(args, json_cfg_file_path):
     global log_enabled
     with open(json_cfg_file_path) as json_cfg_file:
-        json_data = json.load(json_cfg_file)
+
+        json_str = json_cfg_file.read().replace('\n', '').replace('    ', '')
+        output_str("json configuration: {0}".format(json_str))
+
+        json_data = json.loads(json_str)
 
         if "no_epg" in json_data:
             args.no_epg = json_data["no_epg"]
@@ -447,13 +455,11 @@ def abort_process(reason, exitcode, args):
 
 # helper print function with timestamp
 def output_str(event_str):
-    global log_enabled
     global log_items
     try:
         log_item = u"%s %s" % (datetime.datetime.now().isoformat(), event_str)
         print(log_item)
-        if log_enabled:
-            log_items.append(log_item.strip())
+        log_items.append(log_item.strip())
         return log_item.strip()
     except IOError as e:
         if e.errno != 0:
