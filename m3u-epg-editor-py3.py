@@ -176,8 +176,8 @@ arg_parser.add_argument('--group_transforms', '-gt', nargs='?', default=[],
 arg_parser.add_argument('--channel_transforms', '-ct', nargs='?', default=[],
                         help='A json array of key value pairs representing source channel names to target channel names '
                              'to be transformed at processing time')
-arg_parser.add_argument('--range', '-r', nargs='?',
-                        help='An optional range window to consider when adding programmes to the epg')
+arg_parser.add_argument('--range', '-r', nargs='?', default=168,
+                        help="An optional range window hours value used to validate programmes added to the newly generated epg xml")
 arg_parser.add_argument('--sortchannels', '-s', nargs='?',
                         help='The optional desired sort order for channels in the generated m3u')
 arg_parser.add_argument('--xml_sort_type', '-xs', nargs='?', default='none',
@@ -287,8 +287,6 @@ def validate_args():
 
         if args.range:
             args.range = int(args.range)
-        else:
-            args.range = 168
 
         if args.sortchannels:
             list_str = '([' + args.sortchannels + '])'
@@ -388,8 +386,6 @@ def hydrate_args_from_json(args, json_cfg_file_path):
 
         if "range" in json_data:
             args.range = json_data["range"]
-        else:
-            args.range = 168
 
         if "sortchannels" in json_data:
             args.sortchannels = json_data["sortchannels"]
