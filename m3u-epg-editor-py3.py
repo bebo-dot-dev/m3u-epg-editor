@@ -481,9 +481,9 @@ def save_log(args):
                 log_file.write(u"{0}\n".format(log_item))
 
             runtime = datetime.datetime.now() - start_timestamp
-            mins = (runtime.seconds % 3600) // 60
-            secs = runtime.seconds % 60
-            log_str = output_str("script runtime: %s minutes %s seconds" % (mins, secs))
+            minutes = (runtime.seconds % 3600) // 60
+            seconds = runtime.seconds % 60
+            log_str = output_str("script runtime: %s minutes %s seconds" % (minutes, seconds))
             log_file.write(u"{0}\n".format(log_str))
 
             log_str = output_str("process completed")
@@ -875,7 +875,6 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                     new_elem.text = entry.tvg_name
 
         if epg_channel_count > 0:
-
             # perform any specified channel element sorting
             if args.xml_sort_type == 'alpha':
                 channels = new_root.findall("channel[@id]")
@@ -900,6 +899,8 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
 
         # now copy all programme elements from the original epg for every channel present in the m3u
         no_epg_channels = []
+        max_programme_start_timestamp = datetime.datetime.now(tzlocal.get_localzone()) - datetime.timedelta(days=365*10)
+        programme_count = 0
         for entry in tvg_id_unique_entries:
             if entry.tvg_id is not None and entry.tvg_id != "" and entry.tvg_id != "None":
                 output_str("creating programme elements for {}".format(entry.tvg_name))
@@ -910,7 +911,9 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                 if len(channel_programmes) > 0:
                     for elem in channel_programmes:
                         programme_start_timestamp = dateutil.parser.parse(elem.get("start"))
+                        max_programme_start_timestamp = programme_start_timestamp if programme_start_timestamp > max_programme_start_timestamp else max_programme_start_timestamp
                         if is_in_range(args, programme_start_timestamp):
+                            programme_count += 1
                             programme = SubElement(new_root, elem.tag)
                             for attr_key in elem.keys():
                                 attr_val = elem.get(attr_key)
@@ -940,18 +943,28 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                 if entry.tvg_id is None or entry.tvg_id == "" or entry.tvg_id == "None":
                     output_str("creating pseudo programme elements for m3u entry {}".format(entry.tvg_name))
                     programme_start_timestamp = datetime.datetime.now(tzlocal.get_localzone())
+                    programme_stop_timestamp = programme_start_timestamp + datetime.timedelta(hours=2)
+                    max_programme_start_timestamp = max_programme_start_timestamp if programme_start_timestamp > max_programme_start_timestamp else programme_start_timestamp
                     for i in range(1, 84): # create programme elements within a max 7 day window and no more limited by the configured range
                         if is_in_range(args, programme_start_timestamp):
-                            programme_end_timestamp = programme_start_timestamp + datetime.timedelta(hours=2)
+                            programme_count += 1
                             programme = SubElement(new_root, "programme")
                             programme.set("start", programme_start_timestamp.strftime("%Y%m%d%H0000 %z"))
-                            programme.set("stop", programme_end_timestamp.strftime("%Y%m%d%H0000 %z"))
+                            programme.set("stop", programme_stop_timestamp.strftime("%Y%m%d%H0000 %z"))
                             programme.set("channel", entry.tvg_name)
                             title_elem = SubElement(programme, "title")
                             title_elem.text = entry.tvg_name
                             desc_elem = SubElement(programme, "desc")
                             desc_elem.text = entry.tvg_name
                             programme_start_timestamp = programme_start_timestamp + datetime.timedelta(hours=i*2)
+
+        now = datetime.datetime.now(tzlocal.get_localzone())
+        range_start = now - datetime.timedelta(hours=args.range)
+        range_end = now + datetime.timedelta(hours=args.range)
+        output_str('configured epg programme start/stop range is +/-{0}hrs from now ({1} <-> {2})'.format(
+            args.range, range_start.strftime("%d %b %Y %H:%M"), range_end.strftime("%d %b %Y %H:%M")))
+        output_str('latest programme start timestamp found was: {0}'.format(max_programme_start_timestamp.strftime("%d %b %Y %H:%M")))
+        output_str('{0} programmes were added to the epg'.format(programme_count))
 
         indent(new_root)
         tree = ElementTree(new_root)
