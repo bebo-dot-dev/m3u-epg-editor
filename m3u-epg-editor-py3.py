@@ -396,7 +396,7 @@ def hydrate_args_from_json(args, json_cfg_file_path):
             abort_process('sortchannels is expected to be a json array in {}'.format(json_cfg_file_path), 1, args)
 
         if "xml_sort_type" in json_data:
-            args.xml_sort_type = (json_data["xml_sort_type"]).encode('utf-8')
+            args.xml_sort_type = json_data["xml_sort_type"]
 
         if "tvh_start" in json_data:
             args.tvh_start = json_data["tvh_start"]
