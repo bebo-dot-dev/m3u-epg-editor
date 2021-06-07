@@ -31,8 +31,8 @@ m3u-epg-editor solves these problems for free on your own network / computer(s).
 #### dependencies:
 `python`
 
-* m3u-epg-editor-py2.py is / was intended for use with Python v2.7. Official support for Python v2.7 ended on 01/01/2020, ref: [https://github.com/python/devguide/pull/344](https://github.com/python/devguide/pull/344) and [https://www.python.org/dev/peps/pep-0373/](https://www.python.org/dev/peps/pep-0373/). m3u-epg-editor-py2.py is no longer being maintained in this repo, please do not request any further maintenance changes to m3u-epg-editor-py2.py.
 * m3u-epg-editor-py3.py is intended for use with Python v3.x. m3u-epg-editor-py3.py is currently being maintained.
+* m3u-epg-editor-py2.py is / was intended for use with Python v2.7. Official support for Python v2.7 ended on 01/01/2020, ref: [https://github.com/python/devguide/pull/344](https://github.com/python/devguide/pull/344) and [https://www.python.org/dev/peps/pep-0373/](https://www.python.org/dev/peps/pep-0373/). m3u-epg-editor-py2.py is no longer being maintained in this repo, please do not request any further maintenance changes to m3u-epg-editor-py2.py.
 
 Python installers can be downloaded from the official python website: [https://www.python.org/downloads/](https://www.python.org/downloads/).
 In linux, Python can also be installed from a package repository with a package manager i.e. `apt`, `yum` etc or a software manager i.e. synaptic
