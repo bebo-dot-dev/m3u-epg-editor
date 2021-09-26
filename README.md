@@ -1,13 +1,13 @@
 # m3u-epg-editor
 An m3u / epg file optimizer script written in python
 
-m3u-epg-editor enables download of m3u / epg files from a remote web server and introduces features to trim / optimize these files to a set of wanted channel groups along with the ability to sort / reorder channels
+m3u-epg-editor enables download of m3u / epg files from a remote (or local) server and enables the channel groups and channels within these files to be trimmed, optimized and reordered
 
-These features can prove useful where:
+These features might be useful where:
 
-1. You have an underpowered device where SPMC / KODI / some other app running on that device is struggling to download and process very large m3u / epg files
-2. Your service provider supplies you with a url that returns an m3u file containing both live TV channels and VOD content in that one file and you want to filter it to contain only live TV channels
-3. You just want to achieve a filtered list and an improved custom sort order of TV channels
+1. You want to achieve a filtered list and an improved custom sort order of TV channels
+2. You have an underpowered device where SPMC / KODI / some other app running on that device struggles to download and process very large m3u / epg files
+3. Your service provider supplies you with a url that returns an m3u file containing both live TV channels and VOD content in that one file and you want to filter it to contain only live TV channels
 
 This script has been tested with the following IPTV providers:
 
