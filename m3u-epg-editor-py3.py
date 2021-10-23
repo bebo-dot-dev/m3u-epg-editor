@@ -154,6 +154,9 @@ arg_parser.add_argument('--json_cfg', '-j', nargs='?',
                         help='A json input configuration file containing argument values.')
 arg_parser.add_argument('--m3uurl', '-m', nargs='?', help='The url to pull the m3u file from. Both http:// and file:// protocols are supported.')
 arg_parser.add_argument('--epgurl', '-e', nargs='?', help='The url to pull the epg file from. Both http:// and file:// protocols are supported.')
+arg_parser.add_argument('--request_headers', '-rh', nargs='?', default=[],
+                        help='An optional json array of key value pairs representing any required HTTP header values '
+                             'to be sent in m3u and epg HTTP requests')
 arg_parser.add_argument('--groups', '-g', nargs='?', help='Channel groups in the m3u to keep or discard. The default '
                                                           'mode is to keep the specified groups, switch to discard '
                                                           'mode with the -gm / --groupmode argument')
@@ -240,6 +243,16 @@ def main():
     save_log(args)
 
 
+# creates a dictionary from the supplied list_items
+def create_dictionary(list_items):
+    dictionary = {}
+    for item in list_items:
+        dictionary_key = next(iter(item.keys()))
+        dictionary_value = next(iter(item.values()))
+        dictionary[dictionary_key] = dictionary_value
+    return dictionary
+
+
 # parses and validates cli arguments passed to this script
 def validate_args():
     global log_enabled
@@ -260,6 +273,11 @@ def validate_args():
         abort_process('--groups is mandatory', 1, args)
 
     if not args.json_cfg:
+        if args.request_headers:
+            args.request_headers = create_dictionary(json.loads(args.request_headers)["request_headers"])
+        else:
+            args.request_headers = {}
+
         set_str = '([' + args.groups + '])'
         args.group_idx = list(ast.literal_eval(set_str))
         args.groups = set(ast.literal_eval(set_str))
@@ -332,6 +350,11 @@ def hydrate_args_from_json(args, json_cfg_file_path):
         output_str("json configuration: {0}".format(json_str))
 
         json_data = json.loads(json_str)
+
+        if "request_headers" in json_data:
+            args.request_headers = create_dictionary(json_data["request_headers"])
+        else:
+            args.request_headers = {}
 
         if "no_epg" in json_data:
             args.no_epg = json_data["no_epg"]
@@ -497,7 +520,7 @@ def save_log(args):
 ########################################################################################################################
 # downloads an m3u, converts it to a list and returns it
 def load_m3u(args):
-    m3u_response = get_m3u(args.m3uurl)
+    m3u_response = get_m3u(args.m3uurl, args.request_headers)
     if m3u_response.status_code == 200:
         m3u_filename = save_original_m3u(args.outdirectory, m3u_response)
         if args.m3uurl.lower().startswith('http'):
@@ -509,8 +532,8 @@ def load_m3u(args):
         m3u_response.close()
 
 
-# performs the HTTP GET
-def get_m3u(m3u_url):
+# performs the HTTP: or FILE: GET
+def get_m3u(m3u_url, request_headers):
     output_str("performing HTTP GET request to " + m3u_url)
 
     if m3u_url.lower().startswith('file'):
@@ -518,7 +541,7 @@ def get_m3u(m3u_url):
         session.mount('file://', FileUriAdapter())
         response = session.get(m3u_url)
     else:
-        response = requests.get(m3u_url)
+        response = requests.get(m3u_url, headers=request_headers)
 
     return response
 
@@ -578,6 +601,7 @@ def transform_string_value(string_value, compare_value, transforms):
         else:
             string_value = re.sub(src_value, replacement_value, string_value)
     return string_value
+
 
 # filters the given m3u_entries using the supplied groups
 def filter_m3u_entries(args, m3u_entries):
@@ -734,7 +758,7 @@ def save_new_m3u(args, m3u_entries):
 ########################################################################################################################
 # downloads an epg gzip file, saves it, extracts it and returns the path to the extracted epg xml
 def load_epg(args):
-    epg_response = get_epg(args.epgurl)
+    epg_response = get_epg(args.epgurl, args.request_headers)
     if epg_response.status_code == 200:
         is_gzipped = \
             args.epgurl.lower().endswith(".gz") or \
@@ -751,8 +775,8 @@ def load_epg(args):
         epg_response.close()
 
 
-# performs the HTTP GET
-def get_epg(epg_url):
+# performs the HTTP: or FILE: GET
+def get_epg(epg_url, request_headers):
     output_str("performing HTTP GET request to " + epg_url)
 
     if epg_url.lower().startswith('file'):
@@ -760,7 +784,7 @@ def get_epg(epg_url):
         session.mount('file://', FileUriAdapter())
         response = session.get(epg_url)
     else:
-        response = requests.get(epg_url, stream=True)
+        response = requests.get(epg_url, headers=request_headers, stream=True)
 
     return response
 

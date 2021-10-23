@@ -74,6 +74,7 @@ i.e `pip install requests lxml python-dateutil tzlocal`
 ```
 $ python ./m3u-epg-editor-py3.py --help
 usage: m3u-epg-editor-py3.py [-h] [--json_cfg [JSON_CFG]] [--m3uurl [M3UURL]] [--epgurl [EPGURL]]
+                             [--request_headers [REQUEST_HEADERS]]
                              [--groups [GROUPS]] [--groupmode [GROUPMODE]]
                              [--discard_channels [DISCARD_CHANNELS]]
                              [--include_channels [INCLUDE_CHANNELS]]
@@ -98,6 +99,8 @@ optional arguments:
   --epgurl [EPGURL], -e [EPGURL]
                         The url to pull the epg file from. Both http:// and file:// protocols are
                         supported. (default: None)
+  --request_headers [REQUEST_HEADERS], -rh [REQUEST_HEADERS]
+                        An optional json array of key value pairs representing any required HTTP header values to be sent in m3u and epg HTTP requests (default: [])
   --groups [GROUPS], -g [GROUPS]
                         Channel groups in the m3u to keep or discard. The default mode is to keep
                         the specified groups, switch to discard mode with the -gm / --groupmode
