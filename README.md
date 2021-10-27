@@ -100,7 +100,8 @@ optional arguments:
                         The url to pull the epg file from. Both http:// and file:// protocols are
                         supported. (default: None)
   --request_headers [REQUEST_HEADERS], -rh [REQUEST_HEADERS]
-                        An optional json array of key value pairs representing any required HTTP header values to be sent in m3u and epg HTTP requests (default: [])
+                        An optional json array of key value pairs representing any required HTTP
+                        header values to be sent in m3u and epg HTTP requests (default: [])
   --groups [GROUPS], -g [GROUPS]
                         Channel groups in the m3u to keep or discard. The default mode is to keep
                         the specified groups, switch to discard mode with the -gm / --groupmode
@@ -187,7 +188,7 @@ Each time this script is run, the following files will be created / overwritten 
 
 * **original.m3u**
 
-   This is the original unmodified m3u file downloaded from the specified `--m3uurl / -m` remote server
+   This is the original unmodified m3u file downloaded from the specified `--m3uurl / -m` server
    
 * **original.channels.txt**
 
@@ -195,7 +196,7 @@ Each time this script is run, the following files will be created / overwritten 
    
 * **original.gz**
 
-   This is the original unmodified epg gzip file downloaded from the specified `--epgurl / -e` remote server. No EPG processing is performed when the optional `--no_epg / -ne` argument is supplied.
+   This is the original unmodified epg gzip file downloaded from the specified `--epgurl / -e` server. No EPG processing is performed when the optional `--no_epg / -ne` argument is supplied.
    
 * **original.xml**
 
