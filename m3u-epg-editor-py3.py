@@ -721,28 +721,28 @@ def save_new_m3u(args, m3u_entries):
 
                         meta += ' tvh-chnum="%s"' % idx
 
-                    if entry.tvg_id is not None and entry.tvg_id != "":
+                    if entry.tvg_id is not None:
                         channel_id = entry.tvg_id.lower() if not args.preserve_case else entry.tvg_id
                         meta += ' tvg-id="%s"' % channel_id
 
                     meta += ' tvg-name="%s"' % entry.tvg_name
 
-                    if logo is not None and logo != "":
+                    if logo is not None:
                         meta += ' tvg-logo="%s"' % logo
 
-                    if entry.group_title is not None and entry.group_title != "":
+                    if entry.group_title is not None:
                         meta += ' group-title="%s"' % entry.group_title
 
-                    if entry.timeshift is not None and entry.timeshift != "":
+                    if entry.timeshift is not None:
                         meta += ' timeshift="%s"' % entry.timeshift
 
-                    if entry.catchup_days is not None and entry.catchup_days != "":
+                    if entry.catchup_days is not None:
                         meta += ' catchup-days="%s"' % entry.catchup_days
 
-                    if entry.catchup is not None and entry.catchup != "":
+                    if entry.catchup is not None:
                         meta += ' catchup="%s"' % entry.catchup
 
-                    if entry.catchup_source is not None and entry.catchup_source != "":
+                    if entry.catchup_source is not None:
                         meta += ' catchup-source="%s"' % entry.catchup_source
 
                     meta += ",%s\n" % entry.name
