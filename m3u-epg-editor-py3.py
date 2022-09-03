@@ -921,18 +921,20 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                         if attr_key.lower() == 'channel' and attr_val is not None:
                             programme.set(attr_key, attr_val.lower())
 
+        # create a dictionary of all channels in the EPG to enable fast searching
+        channel_dictionary = create_channel_dictionary(original_root)
+
         # now copy all programme elements from the original epg for every channel present in the m3u
         no_epg_channels = []
-        max_programme_start_timestamp = datetime.datetime.now(tzlocal.get_localzone()) - datetime.timedelta(days=365*10)
+        max_programme_start_timestamp = datetime.datetime.now(tzlocal.get_localzone()) - datetime.timedelta(days=365 * 10)
         programme_count = 0
         for entry in tvg_id_unique_entries:
             if entry.tvg_id is not None and entry.tvg_id != "" and entry.tvg_id != "None":
                 output_str("creating programme elements for {}".format(entry.tvg_name))
-                # case-insensitive xpath search
-                channel_xpath = entry.tvg_id.lower() if not args.preserve_case else entry.tvg_id
-                channel_xpath = 'programme[@channel="' + channel_xpath + '"]'
-                channel_programmes = original_tree.findall(channel_xpath)
-                if len(channel_programmes) > 0:
+                # dictionary search
+                channel_name = entry.tvg_id.lower() if not args.preserve_case else entry.tvg_id
+                if channel_name in channel_dictionary:
+                    channel_programmes = channel_dictionary[channel_name]
                     for elem in channel_programmes:
                         programme_start_timestamp = dateutil.parser.parse(elem.get("start"))
                         max_programme_start_timestamp = programme_start_timestamp if programme_start_timestamp > max_programme_start_timestamp else max_programme_start_timestamp
@@ -980,7 +982,7 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                             title_elem.text = entry.tvg_name
                             desc_elem = SubElement(programme, "desc")
                             desc_elem.text = entry.tvg_name
-                            programme_start_timestamp = programme_start_timestamp + datetime.timedelta(hours=i*2)
+                            programme_start_timestamp = programme_start_timestamp + datetime.timedelta(hours=i * 2)
 
         now = datetime.datetime.now(tzlocal.get_localzone())
         range_start = now - datetime.timedelta(hours=args.range)
@@ -1001,6 +1003,27 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
         # likely a mangled xml parse exception
         output_str("epg creation failure: {0}".format(e))
         return None
+
+
+# creates a dictionary of channels from the supplied EPG root node
+def create_channel_dictionary(epg_root):
+    channel_dict = {}
+
+    for element in epg_root.iterchildren():
+
+        tag = element.tag.split('}')[1] if '}' in element.tag else element.tag
+
+        if tag == 'programme':
+            key = element.get('channel')
+        else:
+            continue
+
+        if key in channel_dict:
+            channel_dict[key].append(element)
+        else:
+            channel_dict[key] = [element]
+
+    return channel_dict
 
 
 # saves the no_epg_channels list into the file system
