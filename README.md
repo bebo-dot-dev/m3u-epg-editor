@@ -78,6 +78,8 @@ usage: m3u-epg-editor-py3.py [-h] [--json_cfg [JSON_CFG]] [--m3uurl [M3UURL]] [-
                              [--groups [GROUPS]] [--groupmode [GROUPMODE]]
                              [--discard_channels [DISCARD_CHANNELS]]
                              [--include_channels [INCLUDE_CHANNELS]]
+                             [--discard_urls [DISCARD_URLS]]
+                             [--include_urls [INCLUDE_URLS]]
                              [--id_transforms [ID_TRANSFORMS]]
                              [--group_transforms [GROUP_TRANSFORMS]]
                              [--channel_transforms [CHANNEL_TRANSFORMS]] [--range [RANGE]]
@@ -114,9 +116,16 @@ optional arguments:
                         Channels in the m3u to discard. Regex pattern matching is supported
                         (default: None)
   --include_channels [INCLUDE_CHANNELS], -ic [INCLUDE_CHANNELS]
-                        Channels in the m3u to keep. Regex pattern matching is supported. Channel
-                        matched in this argument will always be kept, effectively overriding of any
-                        other group or channel exclusion configuration. (default: None)
+                        Channels in the m3u to keep. Regex pattern matching is supported. Channels 
+                        matched in this argument will always be kept, effectively overriding of 
+                        any other group or channel or url exclusion configuration. (default: None)                        
+  --discard_urls [DISCARD_URLS], -du [DISCARD_URLS]
+                        Urls in the m3u to discard. Regex pattern matching is supported
+                        (default: None)
+  --include_urls [INCLUDE_URLS], -ic [INCLUDE_URLS]
+                        Urls in the m3u to keep. Regex pattern matching is supported. Urls 
+                        matched in this argument will always be kept, effectively overriding of 
+                        any other group or channel or url exclusion configuration. (default: None)                                           
   --id_transforms [ID_TRANSFORMS], -it [ID_TRANSFORMS]
                         A json array of key value pairs representing source channel name values to
                         target tvg-id values to be transformed at processing time (default: [])

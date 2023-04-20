@@ -167,12 +167,18 @@ arg_parser.add_argument('--groupmode', '-gm', nargs='?', default='keep',
 arg_parser.add_argument('--discard_channels', '-dc', nargs='?',
                         help='Channels in the m3u to discard. Regex pattern matching is supported')
 arg_parser.add_argument('--include_channels', '-ic', nargs='?',
-                        help='Channels in the m3u to keep. Regex pattern matching is supported. Channel matched in '
+                        help='Channels in the m3u to keep. Regex pattern matching is supported. Channels matched in '
                              'this argument will always be kept, effectively overriding of any other group or channel '
-                             'exclusion configuration.')
+                             'or url exclusion configuration.')
+arg_parser.add_argument('--discard_urls', '-du', nargs='?',
+                        help='Urls in the m3u to discard. Regex pattern matching is supported')
+arg_parser.add_argument('--include_urls', '-iu', nargs='?',
+                        help='Urls in the m3u to keep. Regex pattern matching is supported. Urls matched in '
+                             'this argument will always be kept, effectively overriding of any other group or channel '
+                             'or url exclusion configuration.')
 arg_parser.add_argument('--id_transforms', '-it', nargs='?', default=[],
-                        help='A json array of key value pairs representing source channel name values to target tvg-id values '
-                             'to be transformed at processing time')
+                        help='A json array of key value pairs representing source channel name values to target '
+                             'tvg-id values to be transformed at processing time')
 arg_parser.add_argument('--group_transforms', '-gt', nargs='?', default=[],
                         help='A json array of key value pairs representing source group names to target groups names '
                              'to be transformed at processing time')
@@ -294,6 +300,18 @@ def validate_args():
         else:
             args.include_channels = list()
 
+        if args.discard_urls:
+            set_str = '([' + args.discard_urls + '])'
+            args.discard_urls = list(ast.literal_eval(set_str))
+        else:
+            args.discard_urls = list()
+
+        if args.include_urls:
+            set_str = '([' + args.include_urls + '])'
+            args.include_urls = list(ast.literal_eval(set_str))
+        else:
+            args.include_urls = list()
+
         if args.id_transforms:
             args.id_transforms = json.loads(args.id_transforms)["id_transforms"]
 
@@ -391,6 +409,22 @@ def hydrate_args_from_json(args, json_cfg_file_path):
 
         if not type(args.include_channels) is list:
             abort_process('include_channels is expected to be a json array in {}'.format(json_cfg_file_path), 1, args)
+
+        if "discard_urls" in json_data:
+            args.discard_urls = json_data["discard_urls"]
+        else:
+            args.discard_urls = list()
+
+        if not type(args.discard_urls) is list:
+            abort_process('discard_urls is expected to be a json array in {}'.format(json_cfg_file_path), 1, args)
+
+        if "include_urls" in json_data:
+            args.include_urls = json_data["include_urls"]
+        else:
+            args.include_urls = list()
+
+        if not type(args.include_urls) is list:
+            abort_process('include_urls is expected to be a json array in {}'.format(json_cfg_file_path), 1, args)
 
         if "id_transforms" in json_data:
             args.id_transforms = json_data["id_transforms"]
@@ -613,6 +647,10 @@ def filter_m3u_entries(args, m3u_entries):
             output_str("ignoring channels in this list {}".format(str(args.discard_channels)))
         if len(args.include_channels) > 0:
             output_str("hard keeping channels in this list {}".format(str(args.include_channels)))
+        if len(args.discard_urls) > 0:
+            output_str("ignoring urls in this list {}".format(str(args.discard_urls)))
+        if len(args.include_urls) > 0:
+            output_str("hard keeping urls in this list {}".format(str(args.include_urls)))
 
         if not args.no_sort:
             # sort the channels by name by default
@@ -633,8 +671,11 @@ def filter_m3u_entries(args, m3u_entries):
 
                 channel_discarded = is_item_matched(args.discard_channels, m3u_entry.tvg_name)
                 channel_always_kept = is_item_matched(args.include_channels, m3u_entry.tvg_name)
+                url_discarded = is_item_matched(args.discard_urls, m3u_entry.url)
+                url_always_kept = is_item_matched(args.include_urls, m3u_entry.url)
+                always_kept = channel_always_kept or url_always_kept
 
-                if (group_included and not channel_discarded) or channel_always_kept:
+                if (group_included and not channel_discarded and not url_discarded) or always_kept:
                     m3u_entry.tvg_id = transform_string_value(m3u_entry.tvg_id, m3u_entry.tvg_name, args.id_transforms)
                     m3u_entry.group_title = transform_string_value(m3u_entry.group_title, None, args.group_transforms)
                     m3u_entry.tvg_name = transform_string_value(m3u_entry.tvg_name, None, args.channel_transforms)
