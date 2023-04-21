@@ -122,7 +122,7 @@ optional arguments:
   --discard_urls [DISCARD_URLS], -du [DISCARD_URLS]
                         Urls in the m3u to discard. Regex pattern matching is supported
                         (default: None)
-  --include_urls [INCLUDE_URLS], -ic [INCLUDE_URLS]
+  --include_urls [INCLUDE_URLS], -iu [INCLUDE_URLS]
                         Urls in the m3u to keep. Regex pattern matching is supported. Urls 
                         matched in this argument will always be kept, effectively overriding of 
                         any other group or channel or url exclusion configuration. (default: None)                                           
