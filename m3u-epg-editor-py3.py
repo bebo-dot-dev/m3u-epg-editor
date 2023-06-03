@@ -29,7 +29,8 @@ import io
 import re
 import shutil
 import gzip
-from lxml.etree import Element, SubElement, parse, ElementTree, XMLParser
+from lxml.etree import Element, SubElement, parse, XMLParser
+from xml.etree.ElementTree import tostring
 import datetime
 import dateutil.parser
 import tzlocal
@@ -898,9 +899,11 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
             return None
 
         new_root = Element("tv")
-        new_root.set("source-info-name", "py-m3u-epg-editor")
-        new_root.set("generator-info-name", "py-m3u-epg-editor")
-        new_root.set("generator-info-url", "py-m3u-epg-editor")
+        new_root.set("source-info-name", "m3u-epg-editor")
+        new_root.set("source-info-url", "github.com/bebo-dot-dev/m3u-epg-editor")
+        new_root.set("source-data-url", "github.com/bebo-dot-dev/m3u-epg-editor")
+        new_root.set("generator-info-name", "m3u-epg-editor")
+        new_root.set("generator-info-url", "https://github.com/bebo-dot-dev/m3u-epg-editor")
 
         # create a channel element for every channel present in the m3u
         epg_channel_count = 0
@@ -1033,13 +1036,11 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
         output_str('latest programme start timestamp found was: {0}'.format(max_programme_start_timestamp.strftime("%d %b %Y %H:%M")))
         output_str('{0} programmes were added to the epg'.format(programme_count))
 
-        indent(new_root)
-        tree = ElementTree(new_root)
-
         if len(no_epg_channels) > 0:
             save_no_epg_channels(args, no_epg_channels)
 
-        return tree
+        indent(new_root)
+        return new_root
     except Exception as e:
         # likely a mangled xml parse exception
         output_str("epg creation failure: {0}".format(e))
@@ -1075,11 +1076,16 @@ def save_no_epg_channels(args, no_epg_channels):
             no_epg_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name, m3u_entry.tvg_id))
 
 
-# saves the epg xml document represented by xml_tree into the file system
-def save_new_epg(args, xml_tree):
+# saves the epg xml document represented by epg_xml into the file system
+def save_new_epg(args, epg_xml):
+    epg_xml_str = ('<?xml version="1.0" encoding="UTF-8"?>' + '\n' +
+                   '<!DOCTYPE tv SYSTEM "xmltv.dtd">' + '\n' +
+                   tostring(epg_xml, encoding="unicode"))
+
     epg_target = os.path.join(args.outdirectory, args.outfilename + ".xml")
     output_str("saving new epg xml file: " + epg_target)
-    xml_tree.write(epg_target, encoding="UTF-8", xml_declaration=True)
+    with io.open(epg_target, "w", encoding="utf-8") as epg_xml_file:
+        epg_xml_file.write(epg_xml_str)
 
 
 if __name__ == '__main__':
