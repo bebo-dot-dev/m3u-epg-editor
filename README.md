@@ -49,7 +49,8 @@ import io
 import re
 import shutil
 import gzip
-from lxml.etree import Element, SubElement, parse, ElementTree, XMLParser
+from lxml.etree import Element, SubElement, parse, XMLParser
+from xml.etree.ElementTree import tostring
 import datetime
 import dateutil.parser
 import tzlocal
