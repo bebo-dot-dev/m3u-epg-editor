@@ -1015,7 +1015,7 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                     programme_start_timestamp = datetime.datetime.now(tzlocal.get_localzone())
                     programme_stop_timestamp = programme_start_timestamp + datetime.timedelta(hours=2)
                     max_programme_start_timestamp = max_programme_start_timestamp if programme_start_timestamp > max_programme_start_timestamp else programme_start_timestamp
-                    for i in range(1, 84): # create programme elements within a max 7 day window and no more limited by the configured range
+                    for i in range(1, 168):  # create programme elements within a max 7 day window and no more limited by the configured range
                         if is_in_range(args, programme_start_timestamp):
                             programme_count += 1
                             programme = SubElement(new_root, "programme")
@@ -1026,7 +1026,8 @@ def create_new_epg(args, original_epg_filename, m3u_entries):
                             title_elem.text = entry.tvg_name
                             desc_elem = SubElement(programme, "desc")
                             desc_elem.text = entry.tvg_name
-                            programme_start_timestamp = programme_start_timestamp + datetime.timedelta(hours=i * 2)
+                            programme_start_timestamp = programme_start_timestamp + datetime.timedelta(hours=2)
+                            programme_stop_timestamp = programme_stop_timestamp + datetime.timedelta(hours=2)
 
         now = datetime.datetime.now(tzlocal.get_localzone())
         range_start = now - datetime.timedelta(hours=args.range)
