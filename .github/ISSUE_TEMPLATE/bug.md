@@ -2,7 +2,7 @@
 name: Bug
 about: Create a bug issue
 title: ''
-labels: ''
+labels: bug
 assignees: bebo-dot-dev
 
 ---
