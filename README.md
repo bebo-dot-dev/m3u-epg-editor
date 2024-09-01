@@ -68,7 +68,7 @@ Python modules that are not included as part of a Python installation that do ne
 * `python-dateutil`
 * `tzlocal`
 
-i.e `pip install requests lxml python-dateutil tzlocal`
+`pip install -r requirements.txt` / `pip install requests lxml python-dateutil tzlocal`
 ***
 
 #### command line options:

@@ -2,6 +2,7 @@
 *.m3u*
 *.xml
 *.txt
+!requirements.txt
 *.gz
 *.sh
 *.json
