@@ -887,7 +887,12 @@ def is_in_range(args, timestamp):
 
 # creates a new epg from the epg represented by original_epg_filename using the given m3u_entries as a template
 def create_new_epg(args, original_epg_filename, m3u_entries):
-    tvg_id_unique_entries = {e.tvg_id.lower(): e for e in m3u_entries}.values()
+    tvg_id_unique_entries = {
+        e.tvg_id.lower(): e
+        for e in m3u_entries
+        if e.tvg_id and e.tvg_id.strip()
+    }.values()
+
     output_str("creating new xml epg for {} m3u items".format(len(tvg_id_unique_entries)))
     try:
         xml_parser = XMLParser(recover=True)
