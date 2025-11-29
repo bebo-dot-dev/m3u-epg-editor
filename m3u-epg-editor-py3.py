@@ -217,6 +217,9 @@ arg_parser.add_argument('--preserve_case', '-pc', action='store_true',
                         help='Optionally preserve the original case sensitivity of tvg-id and channel attributes as '
                              'supplied in the original M3U and EPG file data through to the target newly generated '
                              'M3U and EPG files')
+arg_parser.add_argument('--report', '-rp', action='store_true',
+                        help='When this option is specified the script reads all channels in the source m3u '
+                             ' outputs them alphabetically and then terminates')
 arg_parser.add_argument('--outdirectory', '-d', nargs='?',
                         help='The output folder where retrieved and generated file are to be stored')
 arg_parser.add_argument('--outfilename', '-f', nargs='?', help='The output filename for the generated files')
@@ -232,20 +235,24 @@ def main():
     args = validate_args()
 
     m3u_entries = load_m3u(args)
-    m3u_entries = filter_m3u_entries(args, m3u_entries)
 
-    if m3u_entries is not None and len(m3u_entries) > 0:
-        if not args.no_sort:
-            m3u_entries = sort_m3u_entries(args, m3u_entries)
+    if args.report:
+        report_groups_and_channels(args, m3u_entries)
+    else:
+        m3u_entries = filter_m3u_entries(args, m3u_entries)
 
-        save_new_m3u(args, m3u_entries)
+        if m3u_entries is not None and len(m3u_entries) > 0:
+            if not args.no_sort:
+                m3u_entries = sort_m3u_entries(args, m3u_entries)
 
-        if not args.no_epg:
-            epg_filename = load_epg(args)
-            if epg_filename is not None:
-                xml_tree = create_new_epg(args, epg_filename, m3u_entries)
-                if xml_tree is not None:
-                    save_new_epg(args, xml_tree)
+            save_new_m3u(args, m3u_entries)
+
+            if not args.no_epg:
+                epg_filename = load_epg(args)
+                if epg_filename is not None:
+                    xml_tree = create_new_epg(args, epg_filename, m3u_entries)
+                    if xml_tree is not None:
+                        save_new_epg(args, xml_tree)
 
     save_log(args)
 
@@ -273,10 +280,10 @@ def validate_args():
     if not args.m3uurl:
         abort_process('--m3uurl is mandatory', 1, args)
 
-    if not args.no_epg and not args.epgurl:
+    if not args.no_epg and not args.report and not args.epgurl:
         abort_process('--epgurl is mandatory', 1, args)
 
-    if not args.groups:
+    if not args.groups and not args.report:
         abort_process('--groups is mandatory', 1, args)
 
     if not args.json_cfg:
@@ -285,61 +292,62 @@ def validate_args():
         else:
             args.request_headers = {}
 
-        set_str = '([' + args.groups + '])'
-        args.group_idx = list(ast.literal_eval(set_str))
-        args.groups = set(ast.literal_eval(set_str))
+        if not args.report:
+            set_str = '([' + args.groups + '])'
+            args.group_idx = list(ast.literal_eval(set_str))
+            args.groups = set(ast.literal_eval(set_str))
 
-        if args.discard_channels:
-            set_str = '([' + args.discard_channels + '])'
-            args.discard_channels = list(ast.literal_eval(set_str))
-        else:
-            args.discard_channels = list()
+            if args.discard_channels:
+                set_str = '([' + args.discard_channels + '])'
+                args.discard_channels = list(ast.literal_eval(set_str))
+            else:
+                args.discard_channels = list()
 
-        if args.include_channels:
-            set_str = '([' + args.include_channels + '])'
-            args.include_channels = list(ast.literal_eval(set_str))
-        else:
-            args.include_channels = list()
+            if args.include_channels:
+                set_str = '([' + args.include_channels + '])'
+                args.include_channels = list(ast.literal_eval(set_str))
+            else:
+                args.include_channels = list()
 
-        if args.discard_urls:
-            set_str = '([' + args.discard_urls + '])'
-            args.discard_urls = list(ast.literal_eval(set_str))
-        else:
-            args.discard_urls = list()
+            if args.discard_urls:
+                set_str = '([' + args.discard_urls + '])'
+                args.discard_urls = list(ast.literal_eval(set_str))
+            else:
+                args.discard_urls = list()
 
-        if args.include_urls:
-            set_str = '([' + args.include_urls + '])'
-            args.include_urls = list(ast.literal_eval(set_str))
-        else:
-            args.include_urls = list()
+            if args.include_urls:
+                set_str = '([' + args.include_urls + '])'
+                args.include_urls = list(ast.literal_eval(set_str))
+            else:
+                args.include_urls = list()
 
-        if args.id_transforms:
-            args.id_transforms = json.loads(args.id_transforms)["id_transforms"]
+            if args.id_transforms:
+                args.id_transforms = json.loads(args.id_transforms)["id_transforms"]
 
-        if args.group_transforms:
-            args.group_transforms = json.loads(args.group_transforms)["group_transforms"]
+            if args.group_transforms:
+                args.group_transforms = json.loads(args.group_transforms)["group_transforms"]
 
-        if args.channel_transforms:
-            args.channel_transforms = json.loads(args.channel_transforms)["channel_transforms"]
+            if args.channel_transforms:
+                args.channel_transforms = json.loads(args.channel_transforms)["channel_transforms"]
 
-        if args.range:
-            args.range = int(args.range)
+            if args.range:
+                args.range = int(args.range)
 
-        if args.sortchannels:
-            list_str = '([' + args.sortchannels + '])'
-            args.sortchannels = list(ast.literal_eval(list_str))
-        else:
-            args.sortchannels = []
+            if args.sortchannels:
+                list_str = '([' + args.sortchannels + '])'
+                args.sortchannels = list(ast.literal_eval(list_str))
+            else:
+                args.sortchannels = []
 
-        if args.tvh_start:
-            args.tvh_start = int(args.tvh_start) - 1
-        else:
-            args.tvh_start = 0
+            if args.tvh_start:
+                args.tvh_start = int(args.tvh_start) - 1
+            else:
+                args.tvh_start = 0
 
-        if args.tvh_offset:
-            args.tvh_offset = int(args.tvh_offset)
-        else:
-            args.tvh_offset = 0
+            if args.tvh_offset:
+                args.tvh_offset = int(args.tvh_offset)
+            else:
+                args.tvh_offset = 0
 
         log_enabled = args.log_enabled
 
@@ -557,7 +565,8 @@ def save_log(args):
 def load_m3u(args):
     m3u_response = get_m3u(args.m3uurl, args.request_headers)
     if m3u_response.status_code == 200:
-        m3u_filename = save_original_m3u(args.outdirectory, m3u_response)
+        m3u_filename, total_line_count, entry_count = save_original_m3u(args.outdirectory, m3u_response)
+        output_str("m3u contains a total of %s lines and %s #EXTINF entries" % (total_line_count, entry_count))
         if args.m3uurl.lower().startswith('http'):
             m3u_response.close()
         m3u_entries = parse_m3u(m3u_filename, args)
@@ -585,9 +594,15 @@ def get_m3u(m3u_url, request_headers):
 def save_original_m3u(out_directory, m3u_response):
     m3u_target = os.path.join(out_directory, "original.m3u8")
     output_str("saving retrieved m3u file: " + m3u_target)
+
+    content = m3u_response.content
+    total_line_count = content.count(b'\n') + (0 if content.endswith(b'\n') else 1)
+    entry_count = content.count(b"#EXTINF")
+
     with io.open(m3u_target, "wb") as m3u_file:
-        m3u_file.write(m3u_response.content)
-        return m3u_target
+        m3u_file.write(content)
+
+    return m3u_target, total_line_count, entry_count
 
 
 # parses the m3u file represented by m3u_filename into a list of M3uItem objects and returns them
@@ -637,6 +652,34 @@ def transform_string_value(string_value, compare_value, transforms):
             string_value = re.sub(src_value, replacement_value, string_value)
     return string_value
 
+
+# reports all groups and channels in the supplied m3u_entries
+def report_groups_and_channels(args, m3u_entries):
+    if m3u_entries is not None and len(m3u_entries) > 0:
+        groups = sorted(
+            {e.group_title for e in m3u_entries if e.group_title and e.group_title.strip()}
+        )
+        tvg_ids = sorted(
+            {e.tvg_id for e in m3u_entries if e.tvg_id and e.tvg_id.strip()}
+        )
+
+        groups_target = os.path.join(args.outdirectory, args.outfilename + ".groups.txt")
+        output_str("reporting all unique groups to: " + groups_target)
+
+        with io.open(groups_target, "w", encoding="utf-8") as groups_target_file:
+            for group in groups:
+                output_str(group)
+                groups_target_file.write(
+                    "\"%s\"\n" % group)
+
+        channels_target = os.path.join(args.outdirectory, args.outfilename + ".channels.txt")
+        output_str("reporting all unique channels to: " + channels_target)
+
+        with io.open(channels_target, "w", encoding="utf-8") as channels_target_file:
+            for channel_name in tvg_ids:
+                output_str(channel_name)
+                channels_target_file.write(
+                    "\"%s\"\n" % channel_name)
 
 # filters the given m3u_entries using the supplied groups
 def filter_m3u_entries(args, m3u_entries):

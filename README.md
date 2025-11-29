@@ -74,104 +74,77 @@ Python modules that are not included as part of a Python installation that do ne
 #### command line options:
 ```
 $ python ./m3u-epg-editor-py3.py --help
-usage: m3u-epg-editor-py3.py [-h] [--json_cfg [JSON_CFG]] [--m3uurl [M3UURL]] [--epgurl [EPGURL]]
-                             [--request_headers [REQUEST_HEADERS]]
-                             [--groups [GROUPS]] [--groupmode [GROUPMODE]]
-                             [--discard_channels [DISCARD_CHANNELS]]
-                             [--include_channels [INCLUDE_CHANNELS]]
-                             [--discard_urls [DISCARD_URLS]]
-                             [--include_urls [INCLUDE_URLS]]
-                             [--id_transforms [ID_TRANSFORMS]]
-                             [--group_transforms [GROUP_TRANSFORMS]]
-                             [--channel_transforms [CHANNEL_TRANSFORMS]] [--range [RANGE]]
-                             [--sortchannels [SORTCHANNELS]] [--xml_sort_type [XML_SORT_TYPE]]
-                             [--tvh_start [TVH_START]] [--tvh_offset [TVH_OFFSET]] [--no_tvg_id]
-                             [--no_epg] [--force_epg] [--no_sort] [--http_for_images]
-                             [--preserve_case] [--outdirectory [OUTDIRECTORY]]
-                             [--outfilename [OUTFILENAME]] [--log_enabled]
+usage: m3u-epg-editor-py3.py [-h] [--json_cfg [JSON_CFG]] [--m3uurl [M3UURL]] [--epgurl [EPGURL]] [--request_headers [REQUEST_HEADERS]]
+                             [--groups [GROUPS]] [--groupmode [GROUPMODE]] [--discard_channels [DISCARD_CHANNELS]] [--include_channels [INCLUDE_CHANNELS]]
+                             [--discard_urls [DISCARD_URLS]] [--include_urls [INCLUDE_URLS]] [--id_transforms [ID_TRANSFORMS]]
+                             [--group_transforms [GROUP_TRANSFORMS]] [--channel_transforms [CHANNEL_TRANSFORMS]] [--range [RANGE]]
+                             [--sortchannels [SORTCHANNELS]] [--xml_sort_type [XML_SORT_TYPE]] [--tvh_start [TVH_START]] [--tvh_offset [TVH_OFFSET]]
+                             [--no_tvg_id] [--no_epg] [--force_epg] [--no_sort] [--http_for_images] [--preserve_case] [--report]
+                             [--outdirectory [OUTDIRECTORY]] [--outfilename [OUTFILENAME]] [--log_enabled]
 
 download and optimize m3u/epg files retrieved from a remote web server
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
-  --json_cfg [JSON_CFG], -j [JSON_CFG]
+  --json_cfg, -j [JSON_CFG]
                         A json input configuration file containing argument values. (default: None)
-  --m3uurl [M3UURL], -m [M3UURL]
-                        The url to pull the m3u file from. Both http:// and file:// protocols are
-                        supported. (default: None)
-  --epgurl [EPGURL], -e [EPGURL]
-                        The url to pull the epg file from. Both http:// and file:// protocols are
-                        supported. (default: None)
-  --request_headers [REQUEST_HEADERS], -rh [REQUEST_HEADERS]
-                        An optional json array of key value pairs representing any required HTTP
-                        header values to be sent in m3u and epg HTTP requests (default: [])
-  --groups [GROUPS], -g [GROUPS]
-                        Channel groups in the m3u to keep or discard. The default mode is to keep
-                        the specified groups, switch to discard mode with the -gm / --groupmode
-                        argument (default: None)
-  --groupmode [GROUPMODE], -gm [GROUPMODE]
-                        Specify "keep" or "discard" to control how the -g / --group argument should
-                        work. When not specified, the -g / --group argument behaviour will default
-                        to keeping the specified groups (default: keep)
-  --discard_channels [DISCARD_CHANNELS], -dc [DISCARD_CHANNELS]
-                        Channels in the m3u to discard. Regex pattern matching is supported
-                        (default: None)
-  --include_channels [INCLUDE_CHANNELS], -ic [INCLUDE_CHANNELS]
-                        Channels in the m3u to keep. Regex pattern matching is supported. Channels 
-                        matched in this argument will always be kept, effectively overriding of 
-                        any other group or channel or url exclusion configuration. (default: None)                        
-  --discard_urls [DISCARD_URLS], -du [DISCARD_URLS]
-                        Urls in the m3u to discard. Regex pattern matching is supported
-                        (default: None)
-  --include_urls [INCLUDE_URLS], -iu [INCLUDE_URLS]
-                        Urls in the m3u to keep. Regex pattern matching is supported. Urls 
-                        matched in this argument will always be kept, effectively overriding of 
-                        any other group or channel or url exclusion configuration. (default: None)                                           
-  --id_transforms [ID_TRANSFORMS], -it [ID_TRANSFORMS]
-                        A json array of key value pairs representing source channel name values to
-                        target tvg-id values to be transformed at processing time (default: [])
-  --group_transforms [GROUP_TRANSFORMS], -gt [GROUP_TRANSFORMS]
-                        A json array of key value pairs representing source group names to target
-                        groups names to be transformed at processing time (default: [])
-  --channel_transforms [CHANNEL_TRANSFORMS], -ct [CHANNEL_TRANSFORMS]
-                        A json array of key value pairs representing source channel names to target
-                        channel names to be transformed at processing time (default: [])
-  --range [RANGE], -r [RANGE]
-                        An optional range window hours value used to validate programmes added to
-                        the newly generated epg xml (default: 168)
-  --sortchannels [SORTCHANNELS], -s [SORTCHANNELS]
-                        The optional desired sort order for channels in the generated m3u (default:
-                        None)
-  --xml_sort_type [XML_SORT_TYPE], -xs [XML_SORT_TYPE]
-                        Specify "alpha" or "m3u" to control how channel elements within the
-                        resulting EPG xml will be sorted. When not specified channel element sort
-                        order will follow the original source xml sort order (default: none)
-  --tvh_start [TVH_START], -ts [TVH_START]
-                        Optionally specify a start value to initialise the absolute start of
-                        numbering for tvh-chnum attribute values (default: None)
-  --tvh_offset [TVH_OFFSET], -t [TVH_OFFSET]
-                        An optional offset value applied to the Tvheadend tvh-chnum attribute
-                        within each channel group (default: None)
-  --no_tvg_id, -nt      Optionally allow channels with no tvg-id attribute to be considered as
-                        valid channels (default: False)
-  --no_epg, -ne         Optionally prevent the download of and the creation of any EPG xml data
-                        (default: False)
-  --force_epg, -fe      Works in tandem with no_tvg_id and no_epg. When EPG processing is enabled
-                        and when this option is specified as true, the generated EPG file will be
-                        populated with elements for channels in the m3u file that normally would
-                        have no EPG data (default: False)
+  --m3uurl, -m [M3UURL]
+                        The url to pull the m3u file from. Both http:// and file:// protocols are supported. (default: None)
+  --epgurl, -e [EPGURL]
+                        The url to pull the epg file from. Both http:// and file:// protocols are supported. (default: None)
+  --request_headers, -rh [REQUEST_HEADERS]
+                        An optional json array of key value pairs representing any required HTTP header values to be sent in m3u and epg HTTP requests
+                        (default: [])
+  --groups, -g [GROUPS]
+                        Channel groups in the m3u to keep or discard. The default mode is to keep the specified groups, switch to discard mode with the
+                        -gm / --groupmode argument (default: None)
+  --groupmode, -gm [GROUPMODE]
+                        Specify "keep" or "discard" to control how the -g / --group argument should work. When not specified, the -g / --group argument
+                        behaviour will default to keeping the specified groups (default: keep)
+  --discard_channels, -dc [DISCARD_CHANNELS]
+                        Channels in the m3u to discard. Regex pattern matching is supported (default: None)
+  --include_channels, -ic [INCLUDE_CHANNELS]
+                        Channels in the m3u to keep. Regex pattern matching is supported. Channels matched in this argument will always be kept,
+                        effectively overriding of any other group or channel or url exclusion configuration. (default: None)
+  --discard_urls, -du [DISCARD_URLS]
+                        Urls in the m3u to discard. Regex pattern matching is supported (default: None)
+  --include_urls, -iu [INCLUDE_URLS]
+                        Urls in the m3u to keep. Regex pattern matching is supported. Urls matched in this argument will always be kept, effectively
+                        overriding of any other group or channel or url exclusion configuration. (default: None)
+  --id_transforms, -it [ID_TRANSFORMS]
+                        A json array of key value pairs representing source channel name values to target tvg-id values to be transformed at processing
+                        time (default: [])
+  --group_transforms, -gt [GROUP_TRANSFORMS]
+                        A json array of key value pairs representing source group names to target groups names to be transformed at processing time
+                        (default: [])
+  --channel_transforms, -ct [CHANNEL_TRANSFORMS]
+                        A json array of key value pairs representing source channel names to target channel names to be transformed at processing time
+                        (default: [])
+  --range, -r [RANGE]   An optional range window hours value used to validate programmes added to the newly generated epg xml (default: 168)
+  --sortchannels, -s [SORTCHANNELS]
+                        The optional desired sort order for channels in the generated m3u (default: None)
+  --xml_sort_type, -xs [XML_SORT_TYPE]
+                        Specify "alpha" or "m3u" to control how channel elements within the resulting EPG xml will be sorted. When not specified channel
+                        element sort order will follow the original source xml sort order (default: none)
+  --tvh_start, -ts [TVH_START]
+                        Optionally specify a start value to initialise the absolute start of numbering for tvh-chnum attribute values (default: None)
+  --tvh_offset, -t [TVH_OFFSET]
+                        An optional offset value applied to the Tvheadend tvh-chnum attribute within each channel group (default: None)
+  --no_tvg_id, -nt      Optionally allow channels with no tvg-id attribute to be considered as valid channels (default: False)
+  --no_epg, -ne         Optionally prevent the download of and the creation of any EPG xml data (default: False)
+  --force_epg, -fe      Works in tandem with no_tvg_id and no_epg. When EPG processing is enabled and when this option is specified as true, the generated
+                        EPG file will be populated with elements for channels in the m3u file that normally would have no EPG data (default: False)
   --no_sort, -ns        Optionally disable all channel sorting functionality (default: False)
   --http_for_images, -hi
-                        Optionally prevent image attributes being populated where the source
-                        contains anything other than a http url i.e. data:image uri content
+                        Optionally prevent image attributes being populated where the source contains anything other than a http url i.e. data:image uri
+                        content (default: False)
+  --preserve_case, -pc  Optionally preserve the original case sensitivity of tvg-id and channel attributes as supplied in the original M3U and EPG file
+                        data through to the target newly generated M3U and EPG files (default: False)
+  --report, -rp         When this option is specified the script reads all channels in the source m3u outputs them alphabetically and then terminates
                         (default: False)
-  --preserve_case, -pc  Optionally preserve the original case sensitivity of tvg-id and channel
-                        attributes as supplied in the original M3U and EPG file data through to the
-                        target newly generated M3U and EPG files (default: False)
-  --outdirectory [OUTDIRECTORY], -d [OUTDIRECTORY]
-                        The output folder where retrieved and generated file are to be stored
-                        (default: None)
-  --outfilename [OUTFILENAME], -f [OUTFILENAME]
+  --outdirectory, -d [OUTDIRECTORY]
+                        The output folder where retrieved and generated file are to be stored (default: None)
+  --outfilename, -f [OUTFILENAME]
                         The output filename for the generated files (default: None)
   --log_enabled, -l     Optionally log script output to process.log (default: False)
 ```

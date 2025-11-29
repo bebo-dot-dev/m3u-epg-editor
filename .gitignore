@@ -8,3 +8,4 @@
 *.json
 !sample_input_args.json
 *.log
+/out/
