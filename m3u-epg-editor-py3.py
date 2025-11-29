@@ -681,6 +681,7 @@ def report_groups_and_channels(args, m3u_entries):
                 channels_target_file.write(
                     "\"%s\"\n" % channel_name)
 
+
 # filters the given m3u_entries using the supplied groups
 def filter_m3u_entries(args, m3u_entries):
     filtered_m3u_entries = []

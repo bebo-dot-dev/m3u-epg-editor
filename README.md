@@ -32,10 +32,9 @@ m3u-epg-editor solves these problems for free on your own network / computer(s).
 `python`
 
 * m3u-epg-editor-py3.py is intended for use with Python v3.x. m3u-epg-editor-py3.py is currently being maintained.
-* m3u-epg-editor-py2.py is / was intended for use with Python v2.7. Official support for Python v2.7 ended on 01/01/2020, ref: [https://github.com/python/devguide/pull/344](https://github.com/python/devguide/pull/344) and [https://www.python.org/dev/peps/pep-0373/](https://www.python.org/dev/peps/pep-0373/). m3u-epg-editor-py2.py is no longer being maintained in this repo, please do not request any further maintenance changes to m3u-epg-editor-py2.py.
 
 Python installers can be downloaded from the official python website: [https://www.python.org/downloads/](https://www.python.org/downloads/).
-In linux, Python can also be installed from a package repository with a package manager i.e. `apt`, `yum` etc or a software manager i.e. synaptic
+In linux, Python can also be installed from a package repository with a package manager i.e. `apt`, `yum` etc. or a software manager i.e. synaptic
 
 #### python modules used by this script:
 ```
@@ -89,9 +88,9 @@ options:
   --json_cfg, -j [JSON_CFG]
                         A json input configuration file containing argument values. (default: None)
   --m3uurl, -m [M3UURL]
-                        The url to pull the m3u file from. Both http:// and file:// protocols are supported. (default: None)
+                        The url to pull the m3u file from. Both http(s):// and file:// protocols are supported. (default: None)
   --epgurl, -e [EPGURL]
-                        The url to pull the epg file from. Both http:// and file:// protocols are supported. (default: None)
+                        The url to pull the epg file from. Both http(s):// and file:// protocols are supported. (default: None)
   --request_headers, -rh [REQUEST_HEADERS]
                         An optional json array of key value pairs representing any required HTTP header values to be sent in m3u and epg HTTP requests
                         (default: [])
@@ -155,11 +154,11 @@ All runtime arguments can be supplied via the file described by the `--json_cfg 
 #### sample usage calls (urls intentionally incomplete):
 **VaderStreams:**
 ```
-$ python ./m3u-epg-editor-py3.py -m="http://xxx.xxx.xxx/vget?username=<USERNAME>&password=<PASSWORD>&format=ts" -e="http://xxx.xxx/p2.xml.gz" -g="'sports','premium movies'" -ic="'willow hd','bein sports espanol hd'" -s="'sky cinema drama hd','sky cinema comedy hd','sky cinema villians hd','sky cinema premiere hd','sky cinema sci-fi & horror hd','sky cinema thriller hd','sky cinema select hd','sky cinema family hd','sky cinema disney hd'" -r=12 -d="/home/target_directory" -f="output_file"
+$ python ./m3u-epg-editor-py3.py -m="http(s)://xxx.xxx.xxx/vget?username=<USERNAME>&password=<PASSWORD>&format=ts" -e="http://xxx.xxx/p2.xml.gz" -g="'sports','premium movies'" -ic="'willow hd','bein sports espanol hd'" -s="'sky cinema drama hd','sky cinema comedy hd','sky cinema villians hd','sky cinema premiere hd','sky cinema sci-fi & horror hd','sky cinema thriller hd','sky cinema select hd','sky cinema family hd','sky cinema disney hd'" -r=12 -d="/home/target_directory" -f="output_file"
 ```
 **FabIPTV:**
 ```
-$ python ./m3u-epg-editor-py3.py -m="http://xxx.xxx:8080/get.php?username=<USERNAME>&password=<PASSWORD>&type=m3u_plus&output=ts" -e="http://xxx.xxx:8080/xmltv.php?username=<USERNAME>&password=<PASSWORD>" -g="'uk + 1 channels','uk bt sport','uk documentaries','uk entertainment','uk movies','uk other sports','uk sky sports'" -ic="'dave hd'" -s="'bbc one +1','bbc two +1','itv +1','itv 2 +1','itv 3 +1','itv encore +1','itv4 +1','itvbe +1','channel 4 +1','channel 5 +1','sky living +1','sky1 +1'" -r=12 -d="/home/target_directory" -f="output_file"
+$ python ./m3u-epg-editor-py3.py -m="http(s)://xxx.xxx:8080/get.php?username=<USERNAME>&password=<PASSWORD>&type=m3u_plus&output=ts" -e="http://xxx.xxx:8080/xmltv.php?username=<USERNAME>&password=<PASSWORD>" -g="'uk + 1 channels','uk bt sport','uk documentaries','uk entertainment','uk movies','uk other sports','uk sky sports'" -ic="'dave hd'" -s="'bbc one +1','bbc two +1','itv +1','itv 2 +1','itv 3 +1','itv encore +1','itv4 +1','itvbe +1','channel 4 +1','channel 5 +1','sky living +1','sky1 +1'" -r=12 -d="/home/target_directory" -f="output_file"
 ```
 ***
 
@@ -187,7 +186,7 @@ Each time this script is run, the following files will be created / overwritten 
    
 * **[--outfilename].m3u**
 
-   This is the new rewritten m3u file created from the original m3u file. This will contain all of the channels that you've decided to keep. Channels are optionally sorted according to the sort order specified in `--sortchannels / -s`. If `--no_sort / -ns` is specified, anything supplied in `--sortchannels / -s` is ignored.
+   This is the new rewritten m3u file created from the original m3u file. This will contain all the channels that you've decided to keep. Channels are optionally sorted according to the sort order specified in `--sortchannels / -s`. If `--no_sort / -ns` is specified, anything supplied in `--sortchannels / -s` is ignored.
    
 * **[--outfilename].channels.txt**
 
@@ -195,7 +194,7 @@ Each time this script is run, the following files will be created / overwritten 
    
 * **[--outfilename].xml**
 
-   This is the new rewritten epg file created from the original epg file that contains epg data for all of the channels that you've decided to keep. If `--range / -r` was specified, epg data will be filtered to only include entries that fall within the range window of `range_start <= programme_start <= range_end`. No EPG file will be created when the optional `--no_epg / -ne` argument is supplied.
+   This is the new rewritten epg file created from the original epg file that contains epg data for all the channels that you've decided to keep. If `--range / -r` was specified, epg data will be filtered to only include entries that fall within the range window of `range_start <= programme_start <= range_end`. No EPG file will be created when the optional `--no_epg / -ne` argument is supplied.
    
 * **no_epg_channels.txt**
 
