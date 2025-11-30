@@ -662,8 +662,11 @@ def report_groups_and_channels(args, m3u_entries):
         tvg_ids = sorted(
             {e.tvg_id for e in m3u_entries if e.tvg_id and e.tvg_id.strip()}
         )
+        channels = sorted(
+            {e.tvg_name for e in m3u_entries if e.tvg_name and e.tvg_name.strip()}
+        )
 
-        groups_target = os.path.join(args.outdirectory, args.outfilename + ".groups.txt")
+        groups_target = os.path.join(args.outdirectory, args.outfilename + ".groups.report.txt")
         output_str("reporting all unique groups to: " + groups_target)
 
         with io.open(groups_target, "w", encoding="utf-8") as groups_target_file:
@@ -672,14 +675,23 @@ def report_groups_and_channels(args, m3u_entries):
                 groups_target_file.write(
                     "\"%s\"\n" % group)
 
-        channels_target = os.path.join(args.outdirectory, args.outfilename + ".channels.txt")
+        tvg_ids_target = os.path.join(args.outdirectory, args.outfilename + ".tvg_ids.report.txt")
+        output_str("reporting all unique channel Ids to: " + tvg_ids_target)
+
+        with io.open(tvg_ids_target, "w", encoding="utf-8") as tvg_ids_target_file:
+            for tvg_id in tvg_ids:
+                output_str(tvg_id)
+                tvg_ids_target_file.write(
+                    "\"%s\"\n" % tvg_id)
+
+        channels_target = os.path.join(args.outdirectory, args.outfilename + ".channels.report.txt")
         output_str("reporting all unique channels to: " + channels_target)
 
         with io.open(channels_target, "w", encoding="utf-8") as channels_target_file:
-            for channel_name in tvg_ids:
-                output_str(channel_name)
+            for channel in channels:
+                output_str(channel)
                 channels_target_file.write(
-                    "\"%s\"\n" % channel_name)
+                    "\"%s\"\n" % channel)
 
 
 # filters the given m3u_entries using the supplied groups
@@ -701,31 +713,35 @@ def filter_m3u_entries(args, m3u_entries):
             # sort the channels by name by default
             m3u_entries = sorted(m3u_entries, key=lambda entry: entry.tvg_name)
 
-        all_channels_name_target = os.path.join(args.outdirectory, "original.channels.txt")
-        with io.open(all_channels_name_target, "w", encoding="utf-8") as all_channels_file:
-            for m3u_entry in m3u_entries:
-                all_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name, m3u_entry.group_title))
-                group_matched = is_item_matched(args.groups, m3u_entry.group_title)
+        all_channels_target = os.path.join(args.outdirectory, "original.channels.txt")
+        filtered_channels_target = os.path.join(args.outdirectory, "filtered.channels.txt")
+        with io.open(all_channels_target, "w", encoding="utf-8") as all_channels_file:
+            with io.open(filtered_channels_target, "w", encoding="utf-8") as filtered_channels_file:
+                for m3u_entry in m3u_entries:
+                    all_channels_file.write("\"%s\",\"%s\",\"%s\"\n" % (m3u_entry.tvg_id, m3u_entry.tvg_name, m3u_entry.group_title))
+                    group_matched = is_item_matched(args.groups, m3u_entry.group_title)
 
-                # check whether the given group is wanted based on the groupmode argument value (defaults to "keep")
-                group_included = False
-                if args.groupmode == "keep":
-                    group_included = group_matched
-                elif args.groupmode == "discard":
-                    group_included = not group_matched
+                    # check whether the given group is wanted based on the groupmode argument value (defaults to "keep")
+                    group_included = False
+                    if args.groupmode == "keep":
+                        group_included = group_matched
+                    elif args.groupmode == "discard":
+                        group_included = not group_matched
 
-                channel_discarded = is_item_matched(args.discard_channels, m3u_entry.tvg_name)
-                channel_always_kept = is_item_matched(args.include_channels, m3u_entry.tvg_name)
-                url_discarded = is_item_matched(args.discard_urls, m3u_entry.url)
-                url_always_kept = is_item_matched(args.include_urls, m3u_entry.url)
-                always_kept = channel_always_kept or url_always_kept
+                    channel_discarded = is_item_matched(args.discard_channels, m3u_entry.tvg_name)
+                    channel_always_kept = is_item_matched(args.include_channels, m3u_entry.tvg_name)
+                    url_discarded = is_item_matched(args.discard_urls, m3u_entry.url)
+                    url_always_kept = is_item_matched(args.include_urls, m3u_entry.url)
+                    always_kept = channel_always_kept or url_always_kept
 
-                if (group_included and not channel_discarded and not url_discarded) or always_kept:
-                    m3u_entry.tvg_id = transform_string_value(m3u_entry.tvg_id, m3u_entry.tvg_name, args.id_transforms)
-                    m3u_entry.group_title = transform_string_value(m3u_entry.group_title, None, args.group_transforms)
-                    m3u_entry.tvg_name = transform_string_value(m3u_entry.tvg_name, None, args.channel_transforms)
-                    m3u_entry.name = transform_string_value(m3u_entry.name, None, args.channel_transforms)
-                    filtered_m3u_entries.append(m3u_entry)
+                    if (group_included and not channel_discarded and not url_discarded) or always_kept:
+                        m3u_entry.tvg_id = transform_string_value(m3u_entry.tvg_id, m3u_entry.tvg_name, args.id_transforms)
+                        m3u_entry.group_title = transform_string_value(m3u_entry.group_title, None, args.group_transforms)
+                        m3u_entry.tvg_name = transform_string_value(m3u_entry.tvg_name, None, args.channel_transforms)
+                        m3u_entry.name = transform_string_value(m3u_entry.name, None, args.channel_transforms)
+                        filtered_m3u_entries.append(m3u_entry)
+                        filtered_channels_file.write(
+                            "\"%s\",\"%s\",\"%s\"\n" % (m3u_entry.tvg_id, m3u_entry.tvg_name, m3u_entry.group_title))
 
         output_str("filtered m3u contains {} items".format(len(filtered_m3u_entries)))
     return filtered_m3u_entries
@@ -836,7 +852,7 @@ def save_new_m3u(args, m3u_entries):
                     m3u_target_file.write(meta)
                     m3u_target_file.write('%s\n' % entry.url)
                     filtered_channels_file.write(
-                        "\"%s\",\"%s\"\n" % (entry.tvg_name, entry.group_title))
+                        "\"%s\",\"%s\",\"%s\"\n" % (entry.tvg_id, entry.tvg_name, entry.group_title))
 
 
 ########################################################################################################################
@@ -1123,7 +1139,7 @@ def save_no_epg_channels(args, no_epg_channels):
     no_epg_channels_target = os.path.join(args.outdirectory, "no_epg_channels.txt")
     with io.open(no_epg_channels_target, "w", encoding="utf-8") as no_epg_channels_file:
         for m3u_entry in no_epg_channels:
-            no_epg_channels_file.write("\"%s\",\"%s\"\n" % (m3u_entry.tvg_name, m3u_entry.tvg_id))
+            no_epg_channels_file.write("\"%s\",\"%s\",\"%s\"\n" % (m3u_entry.tvg_id, m3u_entry.tvg_name, m3u_entry.group_title))
 
 
 # saves the epg xml document represented by epg_xml into the file system
