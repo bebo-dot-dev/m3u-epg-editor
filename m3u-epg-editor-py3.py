@@ -218,8 +218,8 @@ arg_parser.add_argument('--preserve_case', '-pc', action='store_true',
                              'supplied in the original M3U and EPG file data through to the target newly generated '
                              'M3U and EPG files')
 arg_parser.add_argument('--report', '-rp', action='store_true',
-                        help='When this option is specified the script reads all channels in the source m3u '
-                             ' outputs them alphabetically and then terminates')
+                        help='When this option is specified the script reads all groups and channels in the source m3u, '
+                             'outputs them alphabetically and then terminates')
 arg_parser.add_argument('--outdirectory', '-d', nargs='?',
                         help='The output folder where retrieved and generated file are to be stored')
 arg_parser.add_argument('--outfilename', '-f', nargs='?', help='The output filename for the generated files')
