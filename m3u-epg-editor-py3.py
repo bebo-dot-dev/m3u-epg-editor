@@ -43,6 +43,16 @@ start_timestamp = None
 
 
 class M3uItem:
+    _PAT_TVG_NAME = re.compile(r'tvg-name="(.*?)"', re.IGNORECASE)
+    _PAT_TVG_ID = re.compile(r'tvg-id="(.*?)"', re.IGNORECASE)
+    _PAT_TVG_LOGO = re.compile(r'tvg-logo="(.*?)"', re.IGNORECASE)
+    _PAT_GROUP_TITLE = re.compile(r'group-title="(.*?)"', re.IGNORECASE)
+    _PAT_TIMESHIFT = re.compile(r'timeshift="(.*?)"', re.IGNORECASE)
+    _PAT_CATCHUP_DAYS = re.compile(r'catchup-days="(.*?)"', re.IGNORECASE)
+    _PAT_CATCHUP = re.compile(r'catchup="(.*?)"', re.IGNORECASE)
+    _PAT_CATCHUP_SOURCE = re.compile(r'catchup-source="(.*?)"', re.IGNORECASE)
+    _PAT_NAME = re.compile(r'" ?,(.*)$', re.IGNORECASE)
+
     def __init__(self, m3u_fields):
         self.tvg_name = None
         self.tvg_id = None
@@ -59,33 +69,24 @@ class M3uItem:
 
         if m3u_fields is not None:
             try:
-                match = re.search('tvg-name="(.*?)"', m3u_fields, re.IGNORECASE)
-                if match:
-                    self.tvg_name = match.group(1)
-                match = re.search('tvg-id="(.*?)"', m3u_fields, re.IGNORECASE)
-                if match:
-                    self.tvg_id = match.group(1)
-                match = re.search('tvg-logo="(.*?)"', m3u_fields, re.IGNORECASE)
-                if match:
-                    self.tvg_logo = match.group(1)
-                match = re.search('group-title="(.*?)"', m3u_fields, re.IGNORECASE)
-                if match:
-                    self.group_title = match.group(1)
-                match = re.search('timeshift="(.*?)"', m3u_fields, re.IGNORECASE)
-                if match:
-                    self.timeshift = match.group(1)
-                match = re.search('catchup-days="(.*?)"', m3u_fields, re.IGNORECASE)
-                if match:
-                    self.catchup_days = match.group(1)
-                match = re.search('catchup="(.*?)"', m3u_fields, re.IGNORECASE)
-                if match:
-                    self.catchup = match.group(1)
-                match = re.search('catchup-source="(.*?)"', m3u_fields, re.IGNORECASE)
-                if match:
-                    self.catchup_source = match.group(1)
-                self.name = re.search('" ?,(.*)$', m3u_fields, re.IGNORECASE).group(1)
-            except AttributeError as e:
-                output_str("m3u file parse AttributeError: {0}".format(e))
+                m = self._PAT_TVG_NAME.search(m3u_fields)
+                if m: self.tvg_name = m.group(1)
+                m = self._PAT_TVG_ID.search(m3u_fields)
+                if m: self.tvg_id = m.group(1)
+                m = self._PAT_TVG_LOGO.search(m3u_fields)
+                if m: self.tvg_logo = m.group(1)
+                m = self._PAT_GROUP_TITLE.search(m3u_fields)
+                if m: self.group_title = m.group(1)
+                m = self._PAT_TIMESHIFT.search(m3u_fields)
+                if m: self.timeshift = m.group(1)
+                m = self._PAT_CATCHUP_DAYS.search(m3u_fields)
+                if m: self.catchup_days = m.group(1)
+                m = self._PAT_CATCHUP.search(m3u_fields)
+                if m: self.catchup = m.group(1)
+                m = self._PAT_CATCHUP_SOURCE.search(m3u_fields)
+                if m: self.catchup_source = m.group(1)
+                m = self._PAT_NAME.search(m3u_fields)
+                if m: self.name = m.group(1)
             except Exception as ex:
                 output_str("m3u file parse Exception: {0}".format(ex))
 
@@ -566,7 +567,7 @@ def load_m3u(args):
     m3u_response = get_m3u(args.m3uurl, args.request_headers)
     if m3u_response.status_code == 200:
         m3u_filename, total_line_count, entry_count = save_original_m3u(args.outdirectory, m3u_response)
-        output_str("m3u contains a total of %s lines and %s #EXTINF entries" % (total_line_count, entry_count))
+        output_str("m3u file contains a total of %s lines and %s #EXTINF entries" % (total_line_count, entry_count))
         if args.m3uurl.lower().startswith('http'):
             m3u_response.close()
         m3u_entries = parse_m3u(m3u_filename, args)
@@ -608,34 +609,44 @@ def save_original_m3u(out_directory, m3u_response):
 # parses the m3u file represented by m3u_filename into a list of M3uItem objects and returns them
 def parse_m3u(m3u_filename, args):
     m3u_entries = []
-    output_str("parsing m3u into a list of objects")
+    output_str("parsing m3u file into a list of objects")
+
+    allow_no_tvg_id = args.no_tvg_id
+    m3u_class = M3uItem
+    is_valid = m3u_class.is_valid
 
     with io.open(m3u_filename, "r", encoding="utf-8") as m3u_file:
-        line = m3u_file.readline()
-
-        if "#EXTM3U" not in line:
-            output_str("{} doesn't start with #EXTM3U, it doesn't appear to be an M3U file".format(m3u_filename))
-            return m3u_entries
-
-        entry = M3uItem(None)
-        file_line_idx = 1
         try:
-            for line in m3u_file:
-                line = line.strip()
-                if line.startswith('#EXTINF:'):
-                    m3u_fields = line.split('#EXTINF:0 ')[1] if line.startswith('#EXTINF:0') else line.split('#EXTINF:-1 ')[1]
-                    entry = M3uItem(m3u_fields)
-                elif len(line) != 0:
-                    entry.url = line
-                    if M3uItem.is_valid(entry, args.no_tvg_id):
-                        m3u_entries.append(entry)
-                    entry = M3uItem(None)
+            first_line = m3u_file.readline()
+            if "#EXTM3U" not in first_line:
+                output_str("{} doesn't start with #EXTM3U, it doesn't appear to be an M3U file".format(m3u_filename))
+                return m3u_entries
+
+            entry = m3u_class(None)
+            file_line_idx = 1
+
+            for raw_line in m3u_file:
                 file_line_idx += 1
+                line = raw_line.strip()
+                if not line:
+                    continue
+
+                if line.startswith('#EXTINF:'):
+                    parts = line.split(' ', 1)
+                    m3u_fields = parts[1] if len(parts) > 1 else ''
+                    entry = m3u_class(m3u_fields)
+                else:
+                    entry.url = line
+                    if is_valid(entry, allow_no_tvg_id):
+                        m3u_entries.append(entry)
+                    entry = m3u_class(None)
+
         except Exception as ex:
             output_str("m3u file read exception on line {0} : {1}".format(file_line_idx, ex))
 
-    output_str("m3u contains {} items".format(len(m3u_entries)))
+    output_str("parsed and validated {} #EXTINF entries".format(len(m3u_entries)))
     return m3u_entries
+
 
 
 # transforms the given string_value using the supplied transforms list of dictionary items
